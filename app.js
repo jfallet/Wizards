@@ -7,9 +7,27 @@ function dateLabel(iso){const d=new Date(iso);const days=["D","L","M","M","J","V
 function nextNumber(){return state.runs.reduce((m,r)=>Math.max(m,r.number||0),0)+1}
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$(id).classList.remove("hidden")}
 function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {parts,wins,losses:parts.length-wins}}
-function renderHome(){const a=$("activeCard");if(state.active){let s=stats(state.active);a.innerHTML=`<div class="active-card"><div class="active-label">Run en cours</div><div class="active-run"><strong>Run #${state.active.number}</strong><span class="pill">${state.active.rank} · ${s.parts.length} partie${s.parts.length>1?"s":""}</span></div></div>`}else a.innerHTML="";const h=$("history");if(!state.runs.length){h.innerHTML='<div class="empty">Aucun Run terminé pour le moment.</div>';return}h.innerHTML=state.runs.slice().reverse().map(r=>{let s=stats(r);return `<div class="history-card"><button data-open="${r.id}"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}).join("");h.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>detail(b.dataset.open))}
+function renderHome(){
+  const a=$("activeCard");
+  if(state.active){
+    const s=stats(state.active);
+    a.innerHTML=`<div class="active-card active-card-btn"><div class="active-label">Run en cours</div><div class="active-run"><strong>Run #${state.active.number}</strong><span class="pill">${state.active.rank} · ${s.parts.length} partie${s.parts.length>1?"s":""}</span></div><div class="date">${dateLabel(state.active.startedAt)} · ${state.active.deck||"Deck non renseigné"}</div><div class="resume-hint">Toucher pour poursuivre la Run →</div></div>`;
+    a.querySelector(".active-card").onclick=openActiveRun;
+  }else a.innerHTML="";
+  const h=$("history");
+  let cards=[];
+  if(state.active){
+    const r=state.active,s=stats(r);
+    cards.push(`<div class="history-card"><button data-resume-history="1"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span><div class="date" style="text-align:right">EN COURS</div></div></div>`);
+  }
+  cards.push(...state.runs.slice().reverse().map(r=>{const s=stats(r);return `<div class="history-card"><button data-open="${r.id}"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}));
+  h.innerHTML=cards.length?cards.join(""):"<div class=\"empty\">Aucun Run pour le moment.</div>";
+  h.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>detail(b.dataset.open));
+  h.querySelectorAll("[data-resume-history]").forEach(b=>b.onclick=openActiveRun);
+}
 function renderRun(){const r=state.active;if(!r)return;const s=stats(r);$("runNumber").textContent=`Run #${r.number}`;$("runMeta").innerHTML=`<div class="run-info"><span class="rank-badge">${r.rank}</span><span>${r.deck||"Deck non renseigné"}</span></div>`;$("partCount").textContent=s.parts.length;$("partCount").nextElementSibling.textContent=`partie${s.parts.length>1?"s":""}`;$("wins").textContent=`${s.wins} wins`;$("losses").textContent=`${s.losses} losses`;$("parts").innerHTML=s.parts.length?s.parts.map((p,i)=>`<div class="part-row"><span class="part-num">#${i+1}</span><i class="dot ${typeClass[p.result]}"></i><span class="part-name">${labels[p.result]}<small class="part-meta">${p.mode==="draw"?"DRAW":"PLAY"} · ${p.opponent==="atypical"?"ATYPIQUE":"META"}</small></span><span class="opponent ${p.opponentMeta?"meta":"atypique"}">${p.opponentMeta?"META":"ATYPIQUE"}</span></div>`).join(""):'<div class="empty">Aucune partie. Ajoute ta première partie.</div>'}
-function openStart(){if(state.active){alert("Un Run est déjà en cours. Termine-le avant d'en démarrer un nouveau.");return}selectedRank="Platine";document.querySelectorAll(".rank").forEach(b=>b.classList.toggle("selected",b.dataset.rank===selectedRank));$("deckDesc").value="";show("startView")}
+function openActiveRun(){if(!state.active)return;renderRun();show("runView")}
+function openStart(){if(state.active){openActiveRun();return}selectedRank="Platine";document.querySelectorAll(".rank").forEach(b=>b.classList.toggle("selected",b.dataset.rank===selectedRank));$("deckDesc").value="";show("startView")}
 function startRun(){state.active={id:crypto.randomUUID(),number:nextNumber(),rank:selectedRank,deck:$("deckDesc").value.trim(),startedAt:new Date().toISOString(),parts:[]};save();renderRun();show("runView")}
 function finishRun(){if(!state.active)return;if(!state.active.parts.length&&!confirm("Ce Run ne contient aucune partie. Le terminer quand même ?"))return;state.active.finishedAt=new Date().toISOString();state.runs.push(state.active);state.active=null;save();renderHome();show("homeView")}
 function addPart(result){state.active.parts.push({result,opponentMeta:$("opponentMeta").checked,at:new Date().toISOString()});$("opponentMeta").checked=false;save();renderRun();show("runView")}
