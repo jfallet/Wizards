@@ -1,21 +1,17 @@
-# Runs Counter — PWA V1
+# Wizards Run — PWA V1.1
 
-Application mobile de suivi de Runs.
+Compteur de Runs pour MTG Arena.
 
 ## Fonctionnalités
 - Démarrage et terminaison d'un Run
-- Ajout de parties
+- Choix du rank : Platine, Diamant, Mythic
+- Description du deck sélectionné
+- Ajout des parties
 - 6 catégories : Free Win, Good Win, Lucky Win, Bad Luck Loose, Hard Loose, Free Loose
-- Historique des Runs
-- Statistiques par Run
-- Sauvegarde locale dans le navigateur
+- Toggle Meta / Atypique pour le deck adverse à chaque partie
+- Historique et statistiques par Run
+- Sauvegarde locale
 - PWA installable sur iPhone
-- Fonctionnement hors connexion après le premier chargement
 
-## Installation sur iPhone
-1. Héberger ce dossier sur une URL HTTPS (GitHub Pages, Cloudflare Pages, Netlify, etc.).
-2. Ouvrir l'URL avec Safari sur l'iPhone.
-3. Utiliser Partager → Sur l'écran d'accueil → Ajouter.
-4. L'application s'ouvre ensuite comme une app indépendante.
-
-Les données restent stockées localement sur l'iPhone via localStorage.
+## Installation
+Héberger les fichiers sur une URL HTTPS (GitHub Pages, Cloudflare Pages, Netlify...). Ouvrir l'URL dans Safari sur iPhone puis Partager → Sur l'écran d'accueil.
