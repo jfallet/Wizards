@@ -4,3 +4,11 @@
 
 .segmented.three{grid-template-columns:repeat(3,1fr)}
 .global-filter{display:grid;grid-template-columns:1fr 1fr;background:#eef0f2;padding:3px;border-radius:12px;margin:0 0 10px}.global-filter label{position:relative}.global-filter input{position:absolute;opacity:0}.global-filter span{display:block;text-align:center;padding:10px 5px;border-radius:9px;font-size:10px;font-weight:800;color:#4b5563}.global-filter input:checked+span{background:#fff;color:#111827;box-shadow:0 1px 4px #11182718}.global-summary{background:#111827;color:#fff;border-radius:18px;padding:18px;margin:10px 0}.global-summary span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;font-weight:800}.global-summary strong{display:block;font-size:38px;line-height:1;margin:5px 0}.global-summary small{opacity:.75;font-weight:700}.global-group{background:#fff;border-radius:18px;padding:16px;margin:10px 0;box-shadow:0 2px 10px #1118270a}.global-stat-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid #eef0f2}.global-stat-row:first-of-type{margin-top:7px}.global-stat-row div{display:flex;flex-direction:column;gap:3px}.global-stat-row strong{font-size:13px}.global-stat-row small{font-size:10px;color:#9ca3af;font-weight:700}.global-stat-row>b{font-size:21px;letter-spacing:-.03em}
+
+.multi-select{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 18px}
+.multi-select label{cursor:pointer}
+.multi-select input{position:absolute;opacity:0;pointer-events:none}
+.multi-select span{display:flex;align-items:center;justify-content:center;min-height:42px;padding:0 10px;border:1px solid #d1d5db;border-radius:12px;background:#fff;font-weight:800;font-size:12px;letter-spacing:.04em;transition:.15s}
+.multi-select input:checked + span{background:#111827;color:#fff;border-color:#111827;box-shadow:0 0 0 2px rgba(17,24,39,.08)}
+.multi-select.colors{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:380px){.multi-select.colors{grid-template-columns:repeat(5,minmax(0,1fr))}.multi-select span{padding:0 5px}}

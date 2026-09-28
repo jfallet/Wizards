@@ -1,17 +1,8 @@
-# Wizards Run — PWA V1.1
+# Wizards Run V2.3
 
-Compteur de Runs pour MTG Arena.
-
-## Fonctionnalités
-- Démarrage et terminaison d'un Run
-- Choix du rank : Platine, Diamant, Mythic
-- Description du deck sélectionné
-- Ajout des parties
-- 6 catégories : Free Win, Good Win, Lucky Win, Bad Luck Loose, Hard Loose, Free Loose
-- Toggle Meta / Atypique pour le deck adverse à chaque partie
-- Historique et statistiques par Run
-- Sauvegarde locale
-- PWA installable sur iPhone
-
-## Installation
-Héberger les fichiers sur une URL HTTPS (GitHub Pages, Cloudflare Pages, Netlify...). Ouvrir l'URL dans Safari sur iPhone puis Partager → Sur l'écran d'accueil.
+Evolution de V2.2 :
+- suppression de Meta / Atypique ;
+- sélection multiple de l'archétype adverse : Aggro, Midrange, Control, Tempo, Combo ;
+- sélection multiple des couleurs adverses : R, U, B, W, G ;
+- conservation de Play / Draw, Mana, 3 lands T3 et résultats ;
+- statistiques globales conservées sur l'ensemble des parties.
