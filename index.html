@@ -12,7 +12,7 @@
 <section id="partView" class="view hidden"><div class="run-header"><button id="cancelPartBtn" class="text-btn">← Annuler</button><span id="partTitle">Nouvelle partie</span></div><h2>Comment s'est passée<br>la partie ?</h2><div class="part-options">
 <div class="option-label">Je commence la partie ?</div>
 <div class="segmented"><label><input type="radio" name="mode" value="play" checked><span>▶ PLAY</span></label><label><input type="radio" name="mode" value="draw"><span>DRAW</span></label></div>
-<div class="option-label">Archétype adverse — sélection multiple</div>
+<div class="option-label">Archétype adverse</div>
 <div class="multi-select" id="archetypes">
 <label><input type="checkbox" name="archetype" value="Aggro"><span>AGGRO</span></label>
 <label><input type="checkbox" name="archetype" value="Midrange"><span>MIDRANGE</span></label>
@@ -20,7 +20,7 @@
 <label><input type="checkbox" name="archetype" value="Tempo"><span>TEMPO</span></label>
 <label><input type="checkbox" name="archetype" value="Combo"><span>COMBO</span></label>
 </div>
-<div class="option-label">Couleurs adverses — sélection multiple</div>
+<div class="option-label">Couleurs adverses</div>
 <div class="multi-select colors" id="colors">
 <label><input type="checkbox" name="opponentColor" value="R"><span>R</span></label>
 <label><input type="checkbox" name="opponentColor" value="U"><span>U</span></label>
@@ -32,6 +32,6 @@
 <div class="segmented three"><label><input type="radio" name="mana" value="death"><span>DEATH</span></label><label><input type="radio" name="mana" value="ok" checked><span>OK</span></label><label><input type="radio" name="mana" value="flood"><span>FLOOD</span></label></div>
 <div class="option-label">As-tu eu 3 lands au tour 3 ?</div>
 <div class="segmented"><label><input type="radio" name="landT3" value="yes" checked><span>OUI</span></label><label><input type="radio" name="landT3" value="no"><span>NON</span></label></div>
-</div><div class="result-grid"><button class="result win" data-result="freeWin"><b>FREE WIN</b><small>Victoire facile</small></button><button class="result win" data-result="goodWin"><b>GOOD WIN</b><small>Victoire maîtrisée</small></button><button class="result lucky" data-result="luckyWin"><b>LUCKY WIN</b><small>Victoire avec réussite</small></button><button class="result loss" data-result="badLuckLoose"><b>BAD LUCK LOOSE</b><small>Défaite par malchance</small></button><button class="result loss" data-result="hardLoose"><b>HARD LOOSE</b><small>Défaite difficile</small></button><button class="result loss" data-result="freeLoose"><b>FREE LOOSE</b><small>Défaite évitable</small></button></div></section>
+</div><div class="result-grid"><button class="result win" data-result="freeWin"><b>FREE WIN</b><small>Tout droit</small></button><button class="result win" data-result="goodWin"><b>GOOD WIN</b><small>Victoire maîtrisée</small></button><button class="result lucky" data-result="luckyWin"><b>LUCKY WIN</b><small>Victoire avec de la réussite</small></button><button class="result loss" data-result="badLuckLoose"><b>UNLUCKY LOOSE</b><small>Défaite so close</small></button><button class="result loss" data-result="hardLoose"><b>HARD LOOSE</b><small>Défaite difficile/Missplay</small></button><button class="result loss" data-result="freeLoose"><b>FREE LOOSE</b><small>Défaite inévitable</small></button></div></section>
 <section id="detailView" class="view hidden"><div class="run-header"><button id="detailBackBtn" class="text-btn">← Accueil</button><span id="detailTitle"></span></div><div id="detailContent"></div></section>
 </main><script src="app.js"></script></body></html>
