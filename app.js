@@ -10,6 +10,7 @@ function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass
 function allParts(){const parts=[];state.runs.forEach(r=>(r.parts||[]).forEach(p=>parts.push(p)));if(state.active)(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
+function manaBar(death,ok,flood){const total=death.length+ok.length+flood.length;if(!total)return `<div class="mana-empty">Aucune partie renseignée.</div>`;const d=death.length/total*100,o=ok.length/total*100,f=flood.length/total*100;return `<div class="mana-bar" aria-label="Répartition mana"><span class="mana-death" style="width:${d}%"></span><span class="mana-ok" style="width:${o}%"></span><span class="mana-flood" style="width:${f}%"></span></div><div class="mana-legend"><span><i class="mana-dot mana-death"></i>DEATH · ${death.length} (${Math.round(d)}%)</span><span><i class="mana-dot mana-ok"></i>OK · ${ok.length} (${Math.round(o)}%)</span><span><i class="mana-dot mana-flood"></i>FLOOD · ${flood.length} (${Math.round(f)}%)</span></div>`}
 function renderGlobalStats(){
   const parts=allParts();
   const play=parts.filter(p=>p.mode!=="draw"), draw=parts.filter(p=>p.mode==="draw");
@@ -21,7 +22,7 @@ function renderGlobalStats(){
   const colorRows=Object.entries(colorGroups).sort((a,b)=>a[0].localeCompare(b[0])).map(([key,ps])=>statRow(key,ps)).join("");
   $("globalStats").innerHTML=`<div class="global-summary"><div><span>Win rate</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   <div class="global-group"><div class="stat-title">Play / Draw</div>${statRow("PLAY",play)}${statRow("DRAW",draw)}</div>
-  <div class="global-group"><div class="stat-title">Mana</div>${statRow("DEATH",death)}${statRow("OK",ok)}${statRow("FLOOD",flood)}</div>
+  <div class="global-group"><div class="stat-title">Répartition Mana</div>${manaBar(death,ok,flood)}</div>
   <div class="global-group"><div class="stat-title">3 lands au tour 3</div>${statRow("OUI",t3yes)}${statRow("NON",t3no)}</div>
   <div class="global-group"><div class="stat-title">Win rate par combinaison de couleurs adverse</div>${colorRows||"<div class=\"empty\">Aucune couleur renseignée.</div>"}</div>`;
 }
