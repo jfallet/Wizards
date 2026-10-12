@@ -18,7 +18,7 @@ function renderGlobalStats(){
   const overall=winRateFor(parts);
   const colorGroups={};
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
-  const totalColorParts=Object.values(colorGroups).reduce((n,ps)=>n+ps.length,0);const colorRows=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>a[0].localeCompare(b[0])).map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
+  const totalColorParts=parts.length;const colorRows=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
   $("globalStats").innerHTML=`<div class="global-summary"><div><span>Win rate</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   <div class="global-group"><div class="stat-title">Play / Draw</div>${statRow("PLAY",play)}${statRow("DRAW",draw)}</div>
   <div class="global-group"><div class="stat-title">Mana</div>${statRow("DEATH",death)}${statRow("OK",ok)}${statRow("FLOOD",flood)}</div>
