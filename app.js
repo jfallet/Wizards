@@ -10,10 +10,12 @@ function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass
 function allParts(){const parts=[];state.runs.forEach(r=>(r.parts||[]).forEach(p=>parts.push(p)));if(state.active)(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
-function distributionGroup(title,items,showValues=false){
+function distributionGroup(title,items,valueMode="none",winRateItems=[]){
   const total=items.reduce((sum,item)=>sum+item.count,0);
-  const segments=items.filter(item=>item.count>0).map(item=>`<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${total?item.count/total*100:0}%;background:${item.color}" title="${item.label} : ${item.count} partie(s)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${item.count}</span>`:""}</i>`).join("");
-  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div></div>`;
+  const showValues=valueMode!=="none";
+  const segments=items.filter(item=>item.count>0).map(item=>{const share=total?item.count/total*100:0;const value=valueMode==="percent"?`${Math.round(share)}%`:item.count;return `<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${share}%;background:${item.color}" title="${item.label} : ${item.count} partie(s) (${Math.round(share)} % des parties)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${value}</span>`:""}</i>`}).join("");
+  const winRates=winRateItems.length?`<div class="distribution-winrates">${winRateItems.map(item=>`<div><span>${item.label}</span><strong>${winRateFor(item.parts).rate}%</strong></div>`).join("")}</div>`:"";
+  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${winRates}</div>`;
 }
 function renderGlobalStats(){
   const parts=allParts();
@@ -23,14 +25,17 @@ function renderGlobalStats(){
   const overall=winRateFor(parts);
   const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
   const resultItems=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"].map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
+  const playParts=parts.filter(p=>p.mode!=="draw"), drawParts=parts.filter(p=>p.mode==="draw");
+  const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok"), manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
+  const t3yesParts=parts.filter(p=>p.landT3!==false), t3noParts=parts.filter(p=>p.landT3===false);
   const colorGroups={};
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
   const totalColorParts=parts.length;const colorRows=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
   $("globalStats").innerHTML=`<div class="global-summary"><div><span>Win rate global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
-  ${distributionGroup("Répartition des résultats",resultItems,true)}
-  ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}])}
-  ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}])}
-  ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}])}
+  ${distributionGroup("Répartition des résultats",resultItems,"percent")}
+  ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"Win rate Play",parts:playParts},{label:"Win rate Draw",parts:drawParts}])}
+  ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"Win rate Mana OK",parts:manaOkParts},{label:"Win rate Mana Flood",parts:manaFloodParts}])}
+  ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"Win rate 3 lands OK",parts:t3yesParts},{label:"Win rate 3 lands NON",parts:t3noParts}])}
   <div class="global-group"><div class="stat-title">Win rate par combinaison de couleurs adverse</div>${colorRows||"<div class=\"empty\">Aucune couleur renseignée.</div>"}</div>`;
 }
 

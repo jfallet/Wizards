@@ -28,3 +28,9 @@
 .distribution-bar-values{height:24px;gap:2px;margin-bottom:0}
 .distribution-segment-values{display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:0;color:#fff;font-size:11px;font-style:normal;font-weight:800;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.25);white-space:nowrap}
 .distribution-segment-values span{padding:0 2px}
+
+/* V3.4 : ligne de comparaison des win rates sous les histogrammes */
+.distribution-winrates{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;padding-top:10px;border-top:1px solid #eef0f2}
+.distribution-winrates>div{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1 1 130px;min-width:0}
+.distribution-winrates span{font-size:11px;font-weight:700;color:#6b7280}
+.distribution-winrates strong{font-size:15px;color:#111827;font-weight:800}

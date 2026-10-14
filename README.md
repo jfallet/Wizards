@@ -1,10 +1,9 @@
-# Wizards Run V3.2
+# Wizards Run V3.4
 
-Évolutions depuis V3.1.1 :
-- correction de la statistique Mana : répartition du nombre de parties Death / OK / Flood, sans win rate ;
-- histogrammes horizontaux de répartition des parties Play / Draw et 3 lands au tour 3 (Oui / Non) ;
-- histogramme global des résultats sous le win rate, avec une couleur dédiée à chacun des six résultats ;
-- correction de la pastille Lucky Win en bleu dans les listes de parties ;
-- conservation des statistiques globales par combinaison de couleurs adverses (tri décroissant et seuil strict supérieur à 7 % des parties).
+Évolutions depuis V3.3 :
+- histogramme de répartition des résultats : affiche le pourcentage de chaque catégorie parmi toutes les parties, directement dans les segments ;
+- Play / Draw : ajout des win rates Play et Draw sous l’histogramme ;
+- Mana : ajout des win rates Mana OK et Mana Flood sous l’histogramme (Death reste visible dans la répartition mais n’est pas inclus dans cette comparaison) ;
+- 3 lands au tour 3 : ajout des win rates pour Oui et Non sous l’histogramme.
 
-Les données restent stockées localement dans le navigateur.
+Les autres fonctionnalités sont conservées. Les données restent stockées localement dans le navigateur.
