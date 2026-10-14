@@ -10,11 +10,10 @@ function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass
 function allParts(){const parts=[];state.runs.forEach(r=>(r.parts||[]).forEach(p=>parts.push(p)));if(state.active)(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
-function distributionGroup(title,items){
+function distributionGroup(title,items,showValues=false){
   const total=items.reduce((sum,item)=>sum+item.count,0);
-  const segments=items.filter(item=>item.count>0).map(item=>`<i class="distribution-segment" style="width:${total?item.count/total*100:0}%;background:${item.color}" title="${item.label} : ${item.count} partie(s)" aria-label="${item.label} : ${item.count} partie(s)"></i>`).join("");
-  const legend=items.map(item=>`<div class="distribution-legend-item"><span class="distribution-swatch" style="background:${item.color}"></span><span>${item.label}</span><strong>${item.count}</strong></div>`).join("");
-  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div><div class="distribution-legend">${legend}</div><div class="distribution-total">${total} partie${total>1?"s":""}</div></div>`;
+  const segments=items.filter(item=>item.count>0).map(item=>`<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${total?item.count/total*100:0}%;background:${item.color}" title="${item.label} : ${item.count} partie(s)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${item.count}</span>`:""}</i>`).join("");
+  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div></div>`;
 }
 function renderGlobalStats(){
   const parts=allParts();
@@ -28,7 +27,7 @@ function renderGlobalStats(){
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
   const totalColorParts=parts.length;const colorRows=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
   $("globalStats").innerHTML=`<div class="global-summary"><div><span>Win rate global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
-  ${distributionGroup("Répartition des résultats",resultItems)}
+  ${distributionGroup("Répartition des résultats",resultItems,true)}
   ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}])}
   ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}])}
   ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}])}
