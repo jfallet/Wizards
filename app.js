@@ -30,7 +30,7 @@ function renderGlobalStats(){
   const playPct=totalMode?Math.round(play/totalMode*100):0, drawPct=totalMode?Math.round(draw/totalMode*100):0;
   const death=parts.filter(p=>(p.mana||"ok")==="death").length, ok=parts.filter(p=>(p.mana||"ok")==="ok").length, flood=parts.filter(p=>(p.mana||"ok")==="flood").length;
   const t3yesParts=parts.filter(p=>p.landT3!==false), t3noParts=parts.filter(p=>p.landT3===false);
-  const t3yes=t3yesParts.length, t3no=t3noParts.length, totalT3=t3yes+t3no, t3noPct=totalT3?Math.round(t3no/totalT3*100):0;
+  const t3yes=t3yesParts.length, t3no=t3noParts.length, totalT3=t3yes+t3no, t3yesPct=totalT3?Math.round(t3yes/totalT3*100):0, t3noPct=totalT3?Math.round(t3no/totalT3*100):0;
   const overall=winRateFor(parts);
   const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
   const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
@@ -53,11 +53,11 @@ function renderGlobalStats(){
   ${distributionGroup("Répartition des résultats",resultItems,"percent")}
   <div class="global-group play-draw-group"><div class="stat-title">PLAY / DRAW</div>
     ${distributionGroup("Répartition PLAY / DRAW",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`},true)}
-    ${distributionGroup("Résultats en PLAY",resultItemsFor(playParts),"percent",[],null,true)}
-    ${distributionGroup("Résultats en DRAW",resultItemsFor(drawParts),"percent",[],null,true)}
+    ${distributionGroup("",resultItemsFor(playParts),"percent",[],null,true)}
+    ${distributionGroup("",resultItemsFor(drawParts),"percent",[],null,true)}
   </div>
-  ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
-  ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{right:`NON ${t3noPct}%`})}
+  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+  ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`OUI ${t3yesPct}%`,right:`NON ${t3noPct}%`})}
   <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
   $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
