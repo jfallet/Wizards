@@ -10,13 +10,15 @@ function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass
 function allParts(deckFilter="__all__"){const parts=[];state.runs.forEach(r=>{if(deckFilter==="__all__"||r.deck===deckFilter)(r.parts||[]).forEach(p=>parts.push(p))});if(state.active&&(deckFilter==="__all__"||state.active.deck===deckFilter))(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
-function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null){
+function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
   const total=items.reduce((sum,item)=>sum+item.count,0);
   const showValues=valueMode!=="none";
   const segments=items.filter(item=>item.count>0).map(item=>{const share=total?item.count/total*100:0;const value=valueMode==="percent"?`${Math.round(share)}%`:item.count;return `<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${share}%;background:${item.color}" title="${item.label} : ${item.count} partie(s) (${Math.round(share)} % des parties)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${value}</span>`:""}</i>`}).join("");
   const edgeMarkup=edgeLabels?`<div class="distribution-edge-labels"><span>${edgeLabels.left||""}</span><span>${edgeLabels.right||""}</span></div>`:"";
   const winRates=winRateItems.length?`<div class="distribution-winrates">${winRateItems.map(item=>`<div><span>${item.label}</span><strong>${winRateFor(item.parts).rate}%</strong></div>`).join("")}</div>`:"";
-  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar-wrap"><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${edgeMarkup}</div>${winRates}</div>`;
+  const wrapperClass=nested?"distribution-subgroup":"global-group";
+  const titleMarkup=title?`<div class="${nested?"distribution-subtitle":"stat-title"}">${title}</div>`:"";
+  return `<div class="${wrapperClass}">${titleMarkup}<div class="distribution-bar-wrap"><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title||"Répartition"} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${edgeMarkup}</div>${winRates}</div>`;
 }
 function renderGlobalStats(){
   const all=allParts();
@@ -42,16 +44,22 @@ function renderGlobalStats(){
   const otherColorParts=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)<=0.07).flatMap(([key,ps])=>ps);
   const colorRows=visibleColors.map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
   const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Others</strong><small>Combinaisons sous le seuil de 7 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}%</b></div>`:"";
+  const archetypeGroups={};
+  parts.forEach(p=>[...new Set(p.archetypes||[])].forEach(archetype=>{(archetypeGroups[archetype]||(archetypeGroups[archetype]=[])).push(p)}));
+  const archetypeRows=Object.entries(archetypeGroups).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([archetype,ps])=>`<div class="global-stat-row"><div><strong>${archetype}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
   const deckOptions=`<option value="__all__" ${selectedStatsDeck==="__all__"?"selected":""}>Toutes les données</option>${deckNames.map(name=>`<option value="${name.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" ${selectedStatsDeck===name?"selected":""}>${name.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</option>`).join("")}`;
   $("globalStats").innerHTML=`<label class="stats-filter-label" for="statsDeckFilter">Filtrer par deck</label><select id="statsDeckFilter" class="deck-select stats-deck-filter">${deckOptions}</select>
   <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-  ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`})}
-  ${distributionGroup("Résultats en Play",resultItemsFor(playParts),"percent")}
-  ${distributionGroup("Résultats en Draw",resultItemsFor(drawParts),"percent")}
+  <div class="global-group play-draw-group"><div class="stat-title">PLAY / DRAW</div>
+    ${distributionGroup("Répartition PLAY / DRAW",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`},true)}
+    ${distributionGroup("Résultats en PLAY",resultItemsFor(playParts),"percent",[],null,true)}
+    ${distributionGroup("Résultats en DRAW",resultItemsFor(drawParts),"percent",[],null,true)}
+  </div>
   ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
   ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{right:`NON ${t3noPct}%`})}
-  <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>`;
+  <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
+  <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
   $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
 }
 function renderHome(){
