@@ -1,44 +1,59 @@
 const KEY="wizards-run-v2";
 const labels={freeWin:"FREE WIN",goodWin:"GOOD WIN",luckyWin:"LUCKY WIN",badLuckLoose:"BAD LUCK LOOSE",hardLoose:"HARD LOOSE",freeLoose:"FREE LOOSE"};
 const typeClass={freeWin:"win",goodWin:"win",luckyWin:"lucky",badLuckLoose:"loss",hardLoose:"loss",freeLoose:"loss"};
-let state=JSON.parse(localStorage.getItem(KEY)||'{"runs":[],"active":null}'); state.decks=state.decks||[]; let selectedRank="Platine"; let deferredPrompt=null; let editingPartIndex=null;
+let state=JSON.parse(localStorage.getItem(KEY)||'{"runs":[],"active":null}'); state.decks=state.decks||[]; let selectedRank="Platine"; let deferredPrompt=null; let editingPartIndex=null; let selectedStatsDeck="__all__";
 const $=id=>document.getElementById(id); function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function dateLabel(iso){const d=new Date(iso);const days=["D","L","M","M","J","V","S"];return `${days[d.getDay()]}.${d.getDate()}/${d.getMonth()+1} ${d.getHours()}h`;}
 function nextNumber(){return state.runs.reduce((m,r)=>Math.max(m,r.number||0),0)+1}
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$(id).classList.remove("hidden")}
 function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {parts,wins,losses:parts.length-wins}}
-function allParts(){const parts=[];state.runs.forEach(r=>(r.parts||[]).forEach(p=>parts.push(p)));if(state.active)(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
+function allParts(deckFilter="__all__"){const parts=[];state.runs.forEach(r=>{if(deckFilter==="__all__"||r.deck===deckFilter)(r.parts||[]).forEach(p=>parts.push(p))});if(state.active&&(deckFilter==="__all__"||state.active.deck===deckFilter))(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
-function distributionGroup(title,items,valueMode="none",winRateItems=[]){
+function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null){
   const total=items.reduce((sum,item)=>sum+item.count,0);
   const showValues=valueMode!=="none";
   const segments=items.filter(item=>item.count>0).map(item=>{const share=total?item.count/total*100:0;const value=valueMode==="percent"?`${Math.round(share)}%`:item.count;return `<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${share}%;background:${item.color}" title="${item.label} : ${item.count} partie(s) (${Math.round(share)} % des parties)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${value}</span>`:""}</i>`}).join("");
+  const edgeMarkup=edgeLabels?`<div class="distribution-edge-labels"><span>${edgeLabels.left||""}</span><span>${edgeLabels.right||""}</span></div>`:"";
   const winRates=winRateItems.length?`<div class="distribution-winrates">${winRateItems.map(item=>`<div><span>${item.label}</span><strong>${winRateFor(item.parts).rate}%</strong></div>`).join("")}</div>`:"";
-  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${winRates}</div>`;
+  return `<div class="global-group"><div class="stat-title">${title}</div><div class="distribution-bar-wrap"><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${edgeMarkup}</div>${winRates}</div>`;
 }
 function renderGlobalStats(){
-  const parts=allParts();
-  const play=parts.filter(p=>p.mode!=="draw").length, draw=parts.filter(p=>p.mode==="draw").length;
+  const all=allParts();
+  const deckNames=[...new Set([...state.runs.map(r=>r.deck),...(state.active?[state.active.deck]:[])].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  if(selectedStatsDeck!=="__all__"&&!deckNames.includes(selectedStatsDeck))selectedStatsDeck="__all__";
+  const parts=selectedStatsDeck==="__all__"?all:allParts(selectedStatsDeck);
+  const playParts=parts.filter(p=>p.mode!=="draw"), drawParts=parts.filter(p=>p.mode==="draw");
+  const play=playParts.length, draw=drawParts.length, totalMode=play+draw;
+  const playPct=totalMode?Math.round(play/totalMode*100):0, drawPct=totalMode?Math.round(draw/totalMode*100):0;
   const death=parts.filter(p=>(p.mana||"ok")==="death").length, ok=parts.filter(p=>(p.mana||"ok")==="ok").length, flood=parts.filter(p=>(p.mana||"ok")==="flood").length;
-  const t3yes=parts.filter(p=>p.landT3!==false).length, t3no=parts.filter(p=>p.landT3===false).length;
+  const t3yesParts=parts.filter(p=>p.landT3!==false), t3noParts=parts.filter(p=>p.landT3===false);
+  const t3yes=t3yesParts.length, t3no=t3noParts.length, totalT3=t3yes+t3no, t3noPct=totalT3?Math.round(t3no/totalT3*100):0;
   const overall=winRateFor(parts);
   const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
-  const resultItems=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"].map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
-  const playParts=parts.filter(p=>p.mode!=="draw"), drawParts=parts.filter(p=>p.mode==="draw");
+  const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
+  const resultItems=resultKeys.map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
+  const resultItemsFor=xs=>resultKeys.map(key=>({label:labels[key],count:xs.filter(p=>p.result===key).length,color:resultColors[key]}));
   const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok"), manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
-  const t3yesParts=parts.filter(p=>p.landT3!==false), t3noParts=parts.filter(p=>p.landT3===false);
   const colorGroups={};
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
-  const totalColorParts=parts.length;const colorRows=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
-  $("globalStats").innerHTML=`<div class="global-summary"><div><span>Win rate global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
+  const totalColorParts=parts.length;
+  const visibleColors=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+  const otherColorParts=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)<=0.07).flatMap(([key,ps])=>ps);
+  const colorRows=visibleColors.map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
+  const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Others</strong><small>Combinaisons sous le seuil de 7 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}%</b></div>`:"";
+  const deckOptions=`<option value="__all__" ${selectedStatsDeck==="__all__"?"selected":""}>Toutes les données</option>${deckNames.map(name=>`<option value="${name.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" ${selectedStatsDeck===name?"selected":""}>${name.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</option>`).join("")}`;
+  $("globalStats").innerHTML=`<label class="stats-filter-label" for="statsDeckFilter">Filtrer par deck</label><select id="statsDeckFilter" class="deck-select stats-deck-filter">${deckOptions}</select>
+  <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-  ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"Win rate Play",parts:playParts},{label:"Win rate Draw",parts:drawParts}])}
-  ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"Win rate Mana OK",parts:manaOkParts},{label:"Win rate Mana Flood",parts:manaFloodParts}])}
-  ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"Win rate 3 lands OK",parts:t3yesParts},{label:"Win rate 3 lands NON",parts:t3noParts}])}
-  <div class="global-group"><div class="stat-title">Win rate par combinaison de couleurs adverse</div>${colorRows||"<div class=\"empty\">Aucune couleur renseignée.</div>"}</div>`;
+  ${distributionGroup("Play / Draw",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`})}
+  ${distributionGroup("Résultats en Play",resultItemsFor(playParts),"percent")}
+  ${distributionGroup("Résultats en Draw",resultItemsFor(drawParts),"percent")}
+  ${distributionGroup("Mana",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+  ${distributionGroup("3 lands au tour 3",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{right:`NON ${t3noPct}%`})}
+  <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>`;
+  $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
 }
-
 function renderHome(){
   const a=$("activeCard");
   if(state.active){
