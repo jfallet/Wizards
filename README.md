@@ -15,3 +15,9 @@ Les données restent stockées localement dans le navigateur. La version conserv
 - Le pourcentage des parties sans 3 lands au tour 3 reste aligné à droite, dans la zone rouge de l’histogramme.
 - Les statistiques Play/Draw et les répartitions des résultats en Play et en Draw sont regroupées dans un seul bloc PLAY / DRAW.
 - Ajout du WR par archétype adverse, sous le WR par combinaison de couleurs.
+
+
+## Version 3.5.3
+- Suppression des libellés « PLAY / DRAW » et « Répartition PLAY / DRAW » : le bloc commence directement par l’histogramme.
+- Réduction maximale de l’espace vertical entre les histogrammes des résultats en Play et en Draw.
+- Dans l’histogramme « 3 lands T3 », affichage des seuls pourcentages : Oui à gauche et Non à droite, sans libellés textuels.

@@ -48,3 +48,10 @@
 .play-draw-group .distribution-subgroup{padding:10px 0;border-top:1px solid #eef0f2}
 .play-draw-group .distribution-subgroup:first-of-type{border-top:0;padding-top:4px}
 .distribution-subtitle{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;margin:0 0 5px}
+
+
+/* V3.5.3 : histogrammes Play/Draw sans titres et plus compacts */
+.play-draw-group .distribution-subgroup {padding:2px 0;border-top:0}
+.play-draw-group .distribution-subgroup:first-of-type {padding-top:0}
+.play-draw-group .distribution-subgroup:nth-of-type(n+2) .distribution-bar-wrap .distribution-bar {margin:3px 0 0}
+.play-draw-group .distribution-subgroup:nth-of-type(n+2) .distribution-bar-wrap .distribution-bar-values {margin-bottom:0}

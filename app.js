@@ -51,13 +51,13 @@ function renderGlobalStats(){
   $("globalStats").innerHTML=`<label class="stats-filter-label" for="statsDeckFilter">Filtrer par deck</label><select id="statsDeckFilter" class="deck-select stats-deck-filter">${deckOptions}</select>
   <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-  <div class="global-group play-draw-group"><div class="stat-title">PLAY / DRAW</div>
-    ${distributionGroup("Répartition PLAY / DRAW",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`},true)}
+  <div class="global-group play-draw-group">
+    ${distributionGroup("",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`},true)}
     ${distributionGroup("",resultItemsFor(playParts),"percent",[],null,true)}
     ${distributionGroup("",resultItemsFor(drawParts),"percent",[],null,true)}
   </div>
   ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
-  ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`OUI ${t3yesPct}%`,right:`NON ${t3noPct}%`})}
+  ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}%`,right:`${t3noPct}%`})}
   <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
   $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
