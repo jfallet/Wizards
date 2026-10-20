@@ -35,3 +35,9 @@ Les données restent stockées localement dans le navigateur. La version conserv
 ## Version 4.1
 - Les archives affichent les statistiques sans la liste des parties jouées.
 - Un bouton « Effacer » dans l’en-tête permet de supprimer une archive sélectionnée après confirmation.
+
+
+## Version 4.2
+- Les archives présentent les statistiques comme l’accueil : WR global, répartition des résultats, répartition de la mana avec WR Mana OK/Flood et statistiques WR 3 lands T3.
+- La liste des parties reste masquée dans une archive.
+- Cache du service worker renouvelé pour forcer la mise à jour des fichiers de l’application.

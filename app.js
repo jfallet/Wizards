@@ -117,14 +117,35 @@ function archiveRuns(){
 let selectedDetailRunId=null;
 function detail(id){
   const r=state.runs.find(x=>x.id===id);if(!r)return;selectedDetailRunId=id;
-  const s=stats(r);$("detailTitle").textContent=r.isArchive?`Archive · ${r.deck||"Deck non renseigné"}`:`Run #${r.number}`;
+  const s=stats(r);
+  $("detailTitle").textContent=r.isArchive?`Archive · ${r.deck||"Deck non renseigné"}`:`Run #${r.number}`;
   $("detailDeleteArchive").classList.toggle("hidden",!r.isArchive);
-  let counts={};s.parts.forEach(p=>counts[p.result]=(counts[p.result]||0)+1);
-  let winRate=s.parts.length?Math.round(s.wins/s.parts.length*100):0;
-  let manaCounts={death:0,ok:0,flood:0},t3Yes=0,t3No=0;
-  s.parts.forEach(p=>{if(p.mana&&manaCounts[p.mana]!==undefined)manaCounts[p.mana]++;if(p.landT3===false)t3No++;else t3Yes++});
-  const partsMarkup=r.isArchive?"":`<div class="section-head"><h2>Parties</h2></div><div class="detail-list">${s.parts.map((p,i)=>`<div class="part-row ${i===editingPartIndex?"editing":""}"><span class="part-num">#${i+1}</span><i class="dot ${typeClass[p.result]}"></i><span class="part-name">${labels[p.result]}<small class="part-meta">${partMetaText(p)}</small></span></div>`).join("")}</div>`;
-  $("detailContent").innerHTML=`<div class="stat-card"><div class="run-info"><span class="rank-badge">${r.isArchive?"Archive":r.rank}</span><span>${r.deck||"Deck non renseigné"}</span></div></div><div class="stat-card"><div class="stat-title">Résultat</div><div class="stat-value">${s.wins} W · ${s.losses} L</div><div class="bar"><i style="width:${winRate}%;background:#10b981"></i></div><div style="margin-top:8px;font-weight:700">${winRate}% de wins · ${s.parts.length} parties</div></div><div class="stat-card"><div class="stat-title">Mana</div><div class="opponent-stats"><span>Death · ${manaCounts.death}</span><span>OK · ${manaCounts.ok}</span><span>Flood · ${manaCounts.flood}</span></div><div class="opponent-stats"><span>3 lands T3 · ${t3Yes}</span><span>Pas 3 lands T3 · ${t3No}</span></div></div><div class="stat-card"><div class="stat-title">Répartition</div><div class="legend">${Object.keys(labels).map(k=>`<div><span style="background:${k.includes("Win")&&k!=="luckyWin"?"#10b981":k==="luckyWin"?"#2563eb":"#ef4444"}"></span>${labels[k]} · ${counts[k]||0}</div>`).join("")}</div></div>${partsMarkup}`;
+  if(r.isArchive){
+    const parts=s.parts;
+    const overall=winRateFor(parts);
+    const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
+    const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
+    const resultItems=resultKeys.map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
+    const manaDeath=parts.filter(p=>(p.mana||"ok")==="death").length;
+    const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok");
+    const manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
+    const t3yesParts=parts.filter(p=>p.landT3!==false);
+    const t3noParts=parts.filter(p=>p.landT3===false);
+    const t3yesPct=parts.length?Math.round(t3yesParts.length/parts.length*100):0;
+    const t3noPct=parts.length?Math.round(t3noParts.length/parts.length*100):0;
+    $("detailContent").innerHTML=`
+      <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
+      ${distributionGroup("Répartition des résultats",resultItems,"percent")}
+      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+      ${distributionGroup("",[{label:"OUI",count:t3yesParts.length,color:"#16a34a"},{label:"NON",count:t3noParts.length,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}%`,right:`${t3noPct}%`})}`;
+  }else{
+    let counts={};s.parts.forEach(p=>counts[p.result]=(counts[p.result]||0)+1);
+    let winRate=s.parts.length?Math.round(s.wins/s.parts.length*100):0;
+    let manaCounts={death:0,ok:0,flood:0},t3Yes=0,t3No=0;
+    s.parts.forEach(p=>{if(p.mana&&manaCounts[p.mana]!==undefined)manaCounts[p.mana]++;if(p.landT3===false)t3No++;else t3Yes++});
+    const partsMarkup=`<div class="section-head"><h2>Parties</h2></div><div class="detail-list">${s.parts.map((p,i)=>`<div class="part-row ${i===editingPartIndex?"editing":""}"><span class="part-num">#${i+1}</span><i class="dot ${typeClass[p.result]}"></i><span class="part-name">${labels[p.result]}<small class="part-meta">${partMetaText(p)}</small></span></div>`).join("")}</div>`;
+    $("detailContent").innerHTML=`<div class="stat-card"><div class="run-info"><span class="rank-badge">${r.rank}</span><span>${r.deck||"Deck non renseigné"}</span></div></div><div class="stat-card"><div class="stat-title">Résultat</div><div class="stat-value">${s.wins} W · ${s.losses} L</div><div class="bar"><i style="width:${winRate}%;background:#10b981"></i></div><div style="margin-top:8px;font-weight:700">${winRate}% de wins · ${s.parts.length} parties</div></div><div class="stat-card"><div class="stat-title">Mana</div><div class="opponent-stats"><span>Death · ${manaCounts.death}</span><span>OK · ${manaCounts.ok}</span><span>Flood · ${manaCounts.flood}</span></div><div class="opponent-stats"><span>3 lands T3 · ${t3Yes}</span><span>Pas 3 lands T3 · ${t3No}</span></div></div><div class="stat-card"><div class="stat-title">Répartition</div><div class="legend">${Object.keys(labels).map(k=>`<div><span style="background:${k.includes("Win")&&k!=="luckyWin"?"#10b981":k==="luckyWin"?"#2563eb":"#ef4444"}"></span>${labels[k]} · ${counts[k]||0}</div>`).join("")}</div></div>${partsMarkup}`;
+  }
   show("detailView");
 }
 function deleteSelectedArchive(){
