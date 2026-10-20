@@ -21,3 +21,12 @@ Les données restent stockées localement dans le navigateur. La version conserv
 - Suppression des libellés « PLAY / DRAW » et « Répartition PLAY / DRAW » : le bloc commence directement par l’histogramme.
 - Réduction maximale de l’espace vertical entre les histogrammes des résultats en Play et en Draw.
 - Dans l’histogramme « 3 lands T3 », affichage des seuls pourcentages : Oui à gauche et Non à droite, sans libellés textuels.
+
+
+## Version 4.0 — Archives de runs
+- Ajout d'une action « Archiver » à côté de « Effacer » dans l'en-tête de l'historique.
+- L'action regroupe toutes les runs terminées et non encore archivées par deck en une « Run archive » par deck.
+- La date de chaque archive correspond à la date de la dernière run du groupe.
+- Les archives précédentes restent intactes et ne sont jamais intégrées aux nouvelles archives.
+- Les parties sont conservées dans les archives et continuent de contribuer une seule fois aux statistiques globales.
+- Le cache du service worker est versionné pour permettre le chargement des nouveaux fichiers.
