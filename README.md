@@ -1,4 +1,4 @@
-# Wizards Run V4.5
+# Record (Wizards Run) V4.5 — mise à jour
 
 Évolutions depuis la V4.2 :
 - histogramme Death / OK / Flood avec le nombre de parties dans chaque segment ;
@@ -60,3 +60,12 @@ V4.4 : l’histogramme de répartition Mana Death / OK / Flood affiche les pourc
 - Ajout du taux de victoire des parties classées Death dans le bloc de statistiques mana.
 - Les trois taux sont affichés dans l’ordre : « WR Death », « OK » et « Flood », chacun avec son pourcentage.
 - Modification appliquée aux statistiques globales et aux statistiques des archives.
+
+
+## Mise à jour V4.5 — navigation et présentation
+- Le bloc de WR par mana affiche uniquement les trois indicateurs : WR Death, WR OK et WR Flood.
+- L’historique est trié de la run/archive la plus récente à la plus ancienne.
+- Dans une archive, des commandes « Archive précédente » et « Archive suivante » permettent de naviguer depuis le bloc WR global ; les boutons sont désactivés lorsqu’il n’existe pas d’archive dans cette direction.
+- Ajout de l’histogramme Play/Draw et des WR Play/Draw dans les statistiques d’une archive.
+- Le titre affiché de l’application devient « Record » (titre de page et nom de l’application installée).
+- La clé localStorage `wizards-run-v2` est conservée pour préserver les données existantes.

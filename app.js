@@ -58,7 +58,7 @@ function renderGlobalStats(){
     ${distributionGroup("",resultItemsFor(playParts),"percent",[],null,true)}
     ${distributionGroup("",resultItemsFor(drawParts),"percent",[],null,true)}
   </div>
-  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"OK",parts:manaOkParts},{label:"Flood",parts:manaFloodParts}])}
+  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"WR OK",parts:manaOkParts},{label:"WR Flood",parts:manaFloodParts}])}
   ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}
   <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
@@ -77,7 +77,7 @@ function renderHome(){
     const r=state.active,s=stats(r);
     cards.push(`<div class="history-card"><button data-resume-history="1"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span><div class="date" style="text-align:right">EN COURS</div></div></div>`);
   }
-  cards.push(...state.runs.slice().reverse().map(r=>{const s=stats(r);const title=r.isArchive?`Run archive <span class="archive-badge">ARCHIVE</span>`:`Run #${r.number} · ${r.rank}`;return `<div class="history-card"><button data-open="${r.id}"><strong>${title}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}));
+  cards.push(...state.runs.slice().sort((a,b)=>new Date(b.startedAt||0)-new Date(a.startedAt||0)).map(r=>{const s=stats(r);const title=r.isArchive?`Run archive <span class="archive-badge">ARCHIVE</span>`:`Run #${r.number} · ${r.rank}`;return `<div class="history-card"><button data-open="${r.id}"><strong>${title}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}));
   h.innerHTML=cards.length?cards.join(""):"<div class=\"empty\">Aucun Run pour le moment.</div>";
   h.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>detail(b.dataset.open));
   h.querySelectorAll("[data-resume-history]").forEach(b=>b.onclick=openActiveRun);
@@ -128,6 +128,10 @@ function detail(id){
     const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
     const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
     const resultItems=resultKeys.map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
+    const playParts=parts.filter(p=>p.mode!=="draw"), drawParts=parts.filter(p=>p.mode==="draw");
+    const totalMode=playParts.length+drawParts.length;
+    const playPct=totalMode?Math.round(playParts.length/totalMode*100):0;
+    const drawPct=totalMode?Math.round(drawParts.length/totalMode*100):0;
     const manaDeathParts=parts.filter(p=>(p.mana||"ok")==="death");
     const manaDeath=manaDeathParts.length;
     const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok");
@@ -136,11 +140,23 @@ function detail(id){
     const t3noParts=parts.filter(p=>p.landT3===false);
     const t3yesPct=parts.length?Math.round(t3yesParts.length/parts.length*100):0;
     const t3noPct=parts.length?Math.round(t3noParts.length/parts.length*100):0;
+    const archives=state.runs.filter(x=>x.isArchive).slice().sort((a,b)=>new Date(b.startedAt||0)-new Date(a.startedAt||0));
+    const archiveIndex=archives.findIndex(x=>x.id===r.id);
+    const newerArchive=archiveIndex>0?archives[archiveIndex-1]:null;
+    const olderArchive=archiveIndex>=0&&archiveIndex<archives.length-1?archives[archiveIndex+1]:null;
+    const archiveNav=`<div class="archive-navigation"><button type="button" data-archive-nav="newer" ${newerArchive?"":"disabled"}>← Archive précédente</button><button type="button" data-archive-nav="older" ${olderArchive?"":"disabled"}>Archive suivante →</button></div>`;
     $("detailContent").innerHTML=`
-      <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
+      <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div>${archiveNav}</div>
       ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"OK",parts:manaOkParts},{label:"Flood",parts:manaFloodParts}])}
+      <div class="global-group play-draw-group">
+        ${distributionGroup("",[{label:"PLAY",count:playParts.length,color:"#374151"},{label:"DRAW",count:drawParts.length,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}`,right:`DRAW ${drawPct}`},true)}
+      </div>
+      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"WR OK",parts:manaOkParts},{label:"WR Flood",parts:manaFloodParts}])}
       ${distributionGroup("",[{label:"OUI",count:t3yesParts.length,color:"#16a34a"},{label:"NON",count:t3noParts.length,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}`;
+    $("detailContent").querySelectorAll("[data-archive-nav]").forEach(button=>button.addEventListener("click",()=>{
+      const target=button.dataset.archiveNav==="newer"?newerArchive:olderArchive;
+      if(target)detail(target.id);
+    }));
   }else{
     let counts={};s.parts.forEach(p=>counts[p.result]=(counts[p.result]||0)+1);
     let winRate=s.parts.length?Math.round(s.wins/s.parts.length*100):0;
