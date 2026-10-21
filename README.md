@@ -1,4 +1,4 @@
-# Wizards Run V4.4
+# Wizards Run V4.5
 
 Évolutions depuis la V4.2 :
 - histogramme Death / OK / Flood avec le nombre de parties dans chaque segment ;
@@ -54,3 +54,9 @@ Les données restent stockées localement dans le navigateur. La version conserv
 
 
 V4.4 : l’histogramme de répartition Mana Death / OK / Flood affiche les pourcentages de chaque segment plutôt que le nombre de parties. Les WR Mana OK et WR Mana Flood restent inchangés.
+
+
+## Version 4.5
+- Ajout du taux de victoire des parties classées Death dans le bloc de statistiques mana.
+- Les trois taux sont affichés dans l’ordre : « WR Death », « OK » et « Flood », chacun avec son pourcentage.
+- Modification appliquée aux statistiques globales et aux statistiques des archives.

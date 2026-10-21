@@ -36,7 +36,7 @@ function renderGlobalStats(){
   const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
   const resultItems=resultKeys.map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
   const resultItemsFor=xs=>resultKeys.map(key=>({label:labels[key],count:xs.filter(p=>p.result===key).length,color:resultColors[key]}));
-  const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok"), manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
+  const manaDeathParts=parts.filter(p=>(p.mana||"ok")==="death"), manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok"), manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
   const colorGroups={};
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
   const totalColorParts=parts.length;
@@ -58,7 +58,7 @@ function renderGlobalStats(){
     ${distributionGroup("",resultItemsFor(playParts),"percent",[],null,true)}
     ${distributionGroup("",resultItemsFor(drawParts),"percent",[],null,true)}
   </div>
-  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"percent",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"OK",parts:manaOkParts},{label:"Flood",parts:manaFloodParts}])}
   ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}
   <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
@@ -128,7 +128,8 @@ function detail(id){
     const resultColors={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
     const resultKeys=["freeLoose","hardLoose","badLuckLoose","luckyWin","goodWin","freeWin"];
     const resultItems=resultKeys.map(key=>({label:labels[key],count:parts.filter(p=>p.result===key).length,color:resultColors[key]}));
-    const manaDeath=parts.filter(p=>(p.mana||"ok")==="death").length;
+    const manaDeathParts=parts.filter(p=>(p.mana||"ok")==="death");
+    const manaDeath=manaDeathParts.length;
     const manaOkParts=parts.filter(p=>(p.mana||"ok")==="ok");
     const manaFloodParts=parts.filter(p=>(p.mana||"ok")==="flood");
     const t3yesParts=parts.filter(p=>p.landT3!==false);
@@ -138,7 +139,7 @@ function detail(id){
     $("detailContent").innerHTML=`
       <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
       ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"percent",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"OK",parts:manaOkParts},{label:"Flood",parts:manaFloodParts}])}
       ${distributionGroup("",[{label:"OUI",count:t3yesParts.length,color:"#16a34a"},{label:"NON",count:t3noParts.length,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}`;
   }else{
     let counts={};s.parts.forEach(p=>counts[p.result]=(counts[p.result]||0)+1);
