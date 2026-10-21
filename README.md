@@ -1,4 +1,4 @@
-# Wizards Run V4.3
+# Wizards Run V4.4
 
 Évolutions depuis la V4.2 :
 - histogramme Death / OK / Flood avec le nombre de parties dans chaque segment ;
@@ -51,3 +51,6 @@ Les données restent stockées localement dans le navigateur. La version conserv
 - Les archives présentent les statistiques comme l’accueil : WR global, répartition des résultats, répartition de la mana avec WR Mana OK/Flood et statistiques WR 3 lands T3.
 - La liste des parties reste masquée dans une archive.
 - Cache du service worker renouvelé pour forcer la mise à jour des fichiers de l’application.
+
+
+V4.4 : l’histogramme de répartition Mana Death / OK / Flood affiche les pourcentages de chaque segment plutôt que le nombre de parties. Les WR Mana OK et WR Mana Flood restent inchangés.
