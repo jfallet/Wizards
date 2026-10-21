@@ -13,7 +13,7 @@ function statRow(label,parts){const s=winRateFor(parts);return `<div class="glob
 function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
   const total=items.reduce((sum,item)=>sum+item.count,0);
   const showValues=valueMode!=="none";
-  const segments=items.filter(item=>item.count>0).map(item=>{const share=total?item.count/total*100:0;const value=valueMode==="percent"?`${Math.round(share)}%`:item.count;return `<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${share}%;background:${item.color}" title="${item.label} : ${item.count} partie(s) (${Math.round(share)} % des parties)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${value}</span>`:""}</i>`}).join("");
+  const segments=items.filter(item=>item.count>0).map(item=>{const share=total?item.count/total*100:0;const value=valueMode==="percent"?`${Math.round(share)}`:item.count;return `<i class="distribution-segment${showValues?" distribution-segment-values":""}" style="width:${share}%;background:${item.color}" title="${item.label} : ${item.count} partie(s) (${Math.round(share)} % des parties)" aria-label="${item.label} : ${item.count} partie(s)">${showValues?`<span>${value}</span>`:""}</i>`}).join("");
   const edgeMarkup=edgeLabels?`<div class="distribution-edge-labels"><span>${edgeLabels.left||""}</span><span>${edgeLabels.right||""}</span></div>`:"";
   const winRates=winRateItems.length?`<div class="distribution-winrates">${winRateItems.map(item=>`<div><span>${item.label}</span><strong>${winRateFor(item.parts).rate}%</strong></div>`).join("")}</div>`:"";
   const wrapperClass=nested?"distribution-subgroup":"global-group";
@@ -40,10 +40,12 @@ function renderGlobalStats(){
   const colorGroups={};
   parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
   const totalColorParts=parts.length;
-  const visibleColors=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.07).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
-  const otherColorParts=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)<=0.07).flatMap(([key,ps])=>ps);
-  const colorRows=visibleColors.map(([key,ps])=>`<div class="global-stat-row"><div><strong>${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))} ${key}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
-  const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Others</strong><small>Combinaisons sous le seuil de 7 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}%</b></div>`:"";
+  const visibleColors=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)>0.06).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+  const otherColorEntries=Object.entries(colorGroups).filter(([key,ps])=>ps.length/Math.max(1,totalColorParts)<=0.06);
+  const otherColorParts=otherColorEntries.flatMap(([key,ps])=>ps);
+  const allColorGroups={}; all.forEach(p=>{const key=colorCombo(p);(allColorGroups[key]||(allColorGroups[key]=[])).push(p)});
+  const colorRows=visibleColors.map(([key,ps])=>{const fieldCount=(allColorGroups[key]||[]).length;const fieldPct=all.length?Math.round(fieldCount/all.length*100):0;return `<div class="global-stat-row"><div><strong>${key} ${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}% <small class="field-share">(${fieldPct}%)</small></b></div>`}).join("");
+  const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Others</strong><small>Combinaisons ne dépassant pas 6 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}% <small class="field-share">(${all.length?Math.round(otherColorEntries.reduce((n,[key])=>n+(allColorGroups[key]||[]).length,0)/all.length*100):0}%)</small></b></div>`:"";
   const archetypeGroups={};
   parts.forEach(p=>[...new Set(p.archetypes||[])].forEach(archetype=>{(archetypeGroups[archetype]||(archetypeGroups[archetype]=[])).push(p)}));
   const archetypeRows=Object.entries(archetypeGroups).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([archetype,ps])=>`<div class="global-stat-row"><div><strong>${archetype}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
@@ -52,12 +54,12 @@ function renderGlobalStats(){
   <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
   ${distributionGroup("Répartition des résultats",resultItems,"percent")}
   <div class="global-group play-draw-group">
-    ${distributionGroup("",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}%`,right:`DRAW ${drawPct}%`},true)}
+    ${distributionGroup("",[{label:"PLAY",count:play,color:"#374151"},{label:"DRAW",count:draw,color:"#9ca3af"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:`PLAY ${playPct}`,right:`DRAW ${drawPct}`},true)}
     ${distributionGroup("",resultItemsFor(playParts),"percent",[],null,true)}
     ${distributionGroup("",resultItemsFor(drawParts),"percent",[],null,true)}
   </div>
-  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
-  ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}%`,right:`${t3noPct}%`})}
+  ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"count",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+  ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}
   <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
   $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
@@ -82,12 +84,12 @@ function renderHome(){
   renderGlobalStats();
 }
 function selectedValues(name){return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el=>el.value)}
-function canonicalColors(colors){const order=["R","U","B","W","G"];return [...new Set(colors||[])].sort((a,b)=>order.indexOf(a)-order.indexOf(b))}
+function canonicalColors(colors){const order=["W","U","B","R","G"];return [...new Set(colors||[])].sort((a,b)=>order.indexOf(a)-order.indexOf(b))}
 function colorCombo(p){const c=canonicalColors(p.colors);return c.length?c.join(""):"Non renseigné"}
 function colorSymbols(colors){const symbols={R:"🔥",U:"💧",B:"☠",W:"☀",G:"🌳"};return canonicalColors(colors).map(c=>`<span class="mana-symbol mana-${c}" title="${c}">${symbols[c]}</span>`).join("")||"—"}
 function renderDeckOptions(selected=""){const el=$("deckSelect");el.innerHTML=state.decks.length?state.decks.map((d,i)=>`<option value="${i}" ${String(i)===String(selected)?"selected":""}>${d.name} · ${canonicalColors(d.colors).join("")||"Sans couleur"}</option>`).join(""):`<option value="">Aucun deck — ajoute-en un ci-dessous</option>`;}
 function addDeck(){const name=$("newDeckName").value.trim();if(!name){alert("Donne un nom à ce deck.");return}const colors=canonicalColors([...document.querySelectorAll('input[name="myDeckColor"]:checked')].map(x=>x.value));const existing=state.decks.findIndex(d=>d.name.toLowerCase()===name.toLowerCase());const deck={name,colors};if(existing>=0){state.decks[existing]=deck;renderDeckOptions(existing)}else{state.decks.push(deck);renderDeckOptions(state.decks.length-1)}save();$("newDeckName").value="";document.querySelectorAll('input[name="myDeckColor"]').forEach(x=>x.checked=false)}
-function partMetaText(p){const mode=p.mode==="draw"?"DRAW":"PLAY";const archetypes=(p.archetypes||[]).join(" / ")||"Archétype non renseigné";const colors=colorSymbols(p.colors);const mana={death:"DEATH",ok:"OK",flood:"FLOOD"}[p.mana]||"OK";const t3=p.landT3===false?"3L T3 NON":"3L T3 OUI";return `${mode} · ${archetypes} · ${colors} · ${mana} · ${t3}`}
+function partMetaText(p){const mode=p.mode==="draw"?"DRAW":"PLAY";const archetypes=(p.archetypes||[]).join(" / ")||"Archétype non renseigné";const colors=`${canonicalColors(p.colors).join("")} ${colorSymbols(p.colors)}`;const mana={death:"DEATH",ok:"OK",flood:"FLOOD"}[p.mana]||"OK";const t3=p.landT3===false?"3L T3 NON":"3L T3 OUI";return `${mode} · ${archetypes} · ${colors} · ${mana} · ${t3}`}
 
 function renderRun(){const r=state.active;if(!r)return;const s=stats(r);$("runNumber").textContent=`Run #${r.number}`;$("runMeta").innerHTML=`<div class="run-info"><span class="rank-badge">${r.rank}</span><span>${r.deck||"Deck non renseigné"}</span></div>`;$("partCount").textContent=s.parts.length;$("partCount").nextElementSibling.textContent=`partie${s.parts.length>1?"s":""}`;$("wins").textContent=`${s.wins} wins`;$("losses").textContent=`${s.losses} losses`;$("parts").innerHTML=s.parts.length?s.parts.map((p,i)=>`<div class="part-row ${i===editingPartIndex?"editing":""}"><span class="part-num">#${i+1}</span><i class="dot ${typeClass[p.result]}"></i><span class="part-name">${labels[p.result]}<small class="part-meta">${partMetaText(p)}</small></span>${state.active?`<button class="edit-part" data-edit-part="${i}" aria-label="Modifier la partie ${i+1}">✎</button>`:""}</div>`).join(""):'<div class="empty">Aucune partie. Ajoute ta première partie.</div>'}
 function openActiveRun(){if(!state.active)return;editingPartIndex=null;renderRun();show("runView")}
@@ -136,8 +138,8 @@ function detail(id){
     $("detailContent").innerHTML=`
       <div class="global-summary"><div><span>WR global</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} parties</small></div></div>
       ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"none",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
-      ${distributionGroup("",[{label:"OUI",count:t3yesParts.length,color:"#16a34a"},{label:"NON",count:t3noParts.length,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}%`,right:`${t3noPct}%`})}`;
+      ${distributionGroup("",[{label:"DEATH",count:manaDeath,color:"#111827"},{label:"OK",count:manaOkParts.length,color:"#16a34a"},{label:"FLOOD",count:manaFloodParts.length,color:"#2563eb"}],"count",[{label:"WR Mana OK",parts:manaOkParts},{label:"WR Mana Flood",parts:manaFloodParts}])}
+      ${distributionGroup("",[{label:"OUI",count:t3yesParts.length,color:"#16a34a"},{label:"NON",count:t3noParts.length,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}`;
   }else{
     let counts={};s.parts.forEach(p=>counts[p.result]=(counts[p.result]||0)+1);
     let winRate=s.parts.length?Math.round(s.wins/s.parts.length*100):0;

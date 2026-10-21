@@ -1,3 +1,13 @@
+# Wizards Run V4.3
+
+Évolutions depuis la V4.2 :
+- histogramme Death / OK / Flood avec le nombre de parties dans chaque segment ;
+- suppression du caractère « % » dans les valeurs affichées à l'intérieur ou aux extrémités des histogrammes ;
+- seuil des combinaisons de couleurs adverses abaissé à strictement plus de 6 % des parties du filtre courant ; les autres combinaisons sont regroupées dans Others ;
+- les combinaisons de couleurs affichent les lettres avant les pictogrammes, dans l'ordre WUBRG (par exemple UR puis les pictogrammes bleu et rouge) ;
+- le WR de chaque combinaison est accompagné de sa part du field, calculée sur toutes les parties enregistrées, indépendamment du filtre de deck.
+
+La clé de stockage locale reste `wizards-run-v2` afin de conserver les données des versions précédentes.
 # Wizards Run V3.5
 
 Évolutions depuis V3.4 :

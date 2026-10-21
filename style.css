@@ -57,3 +57,6 @@
 .play-draw-group .distribution-subgroup:nth-of-type(n+2) .distribution-bar-wrap .distribution-bar-values {margin-bottom:0}
 
 .danger-btn{color:#dc2626;font-weight:800;margin-left:8px;white-space:nowrap}.run-header #detailTitle{flex:1;text-align:center;margin:0 8px}.run-header #detailBackBtn{white-space:nowrap}
+
+/* V4.3 : part du field à côté du WR */
+.global-stat-row>b .field-share{font-size:11px;color:#6b7280;letter-spacing:0;font-weight:800}
