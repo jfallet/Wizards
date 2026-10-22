@@ -69,3 +69,9 @@ V4.4 : l’histogramme de répartition Mana Death / OK / Flood affiche les pourc
 - Ajout de l’histogramme Play/Draw et des WR Play/Draw dans les statistiques d’une archive.
 - Le titre affiché de l’application devient « Record » (titre de page et nom de l’application installée).
 - La clé localStorage `wizards-run-v2` est conservée pour préserver les données existantes.
+
+
+## Version 4.6
+- Les cartes des runs et des archives sont teintées selon le rang : vert pâle pour Platine, violet pâle pour Diamant et rouge pâle pour Mythic. Pour une archive regroupant plusieurs rangs, la teinte correspond au rang le plus élevé représenté dans le groupe.
+- Ajout du WR directement dans chaque carte de run, y compris la run en cours et les archives.
+- Le stockage local `wizards-run-v2` reste inchangé.

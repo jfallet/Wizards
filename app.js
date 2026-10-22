@@ -9,6 +9,8 @@ function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.add(
 function stats(run){const parts=run.parts||[];let wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {parts,wins,losses:parts.length-wins}}
 function allParts(deckFilter="__all__"){const parts=[];state.runs.forEach(r=>{if(deckFilter==="__all__"||r.deck===deckFilter)(r.parts||[]).forEach(p=>parts.push(p))});if(state.active&&(deckFilter==="__all__"||state.active.deck===deckFilter))(state.active.parts||[]).forEach(p=>parts.push(p));return parts}
 function winRateFor(parts){const wins=parts.filter(p=>typeClass[p.result]==="win"||typeClass[p.result]==="lucky").length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
+function rankClass(rank){const normalized=String(rank||"").toLowerCase();if(normalized.includes("platine"))return "rank-platine";if(normalized.includes("diamant"))return "rank-diamant";if(normalized.includes("mythic")||normalized.includes("mythique"))return "rank-mythic";return ""}
+function highestRank(runs){const order=["Platine","Diamant","Mythic"];return runs.reduce((best,run)=>order.indexOf(run.rank)>order.indexOf(best)?run.rank:best,"Platine")}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
 function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
   const total=items.reduce((sum,item)=>sum+item.count,0);
@@ -68,16 +70,16 @@ function renderHome(){
   const a=$("activeCard");
   if(state.active){
     const s=stats(state.active);
-    a.innerHTML=`<div class="active-card active-card-btn"><div class="active-label">Run en cours</div><div class="active-run"><strong>Run #${state.active.number}</strong><span class="pill">${state.active.rank} · ${s.parts.length} partie${s.parts.length>1?"s":""}</span></div><div class="date">${dateLabel(state.active.startedAt)} · ${state.active.deck||"Deck non renseigné"}</div><div class="resume-hint">Toucher pour poursuivre la Run →</div></div>`;
+    a.innerHTML=`<div class="active-card active-card-btn ${rankClass(state.active.rank)}"><div class="active-label">Run en cours</div><div class="active-run"><strong>Run #${state.active.number}</strong><span class="pill">${state.active.rank} · ${s.parts.length} partie${s.parts.length>1?"s":""}</span></div><div class="date">${dateLabel(state.active.startedAt)} · ${state.active.deck||"Deck non renseigné"}</div><div class="run-card-wr">WR ${winRateFor(s.parts).rate}%</div><div class="resume-hint">Toucher pour poursuivre la Run →</div></div>`;
     a.querySelector(".active-card").onclick=openActiveRun;
   }else a.innerHTML="";
   const h=$("history");
   let cards=[];
   if(state.active){
     const r=state.active,s=stats(r);
-    cards.push(`<div class="history-card"><button data-resume-history="1"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span><div class="date" style="text-align:right">EN COURS</div></div></div>`);
+    cards.push(`<div class="history-card ${rankClass(r.rank)}"><button data-resume-history="1"><strong>Run #${r.number} · ${r.rank}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div><div class="run-card-wr">WR ${winRateFor(s.parts).rate}%</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span><div class="date" style="text-align:right">EN COURS</div></div></div>`);
   }
-  cards.push(...state.runs.slice().sort((a,b)=>new Date(b.startedAt||0)-new Date(a.startedAt||0)).map(r=>{const s=stats(r);const title=r.isArchive?`Run archive <span class="archive-badge">ARCHIVE</span>`:`Run #${r.number} · ${r.rank}`;return `<div class="history-card"><button data-open="${r.id}"><strong>${title}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}));
+  cards.push(...state.runs.slice().sort((a,b)=>new Date(b.startedAt||0)-new Date(a.startedAt||0)).map(r=>{const s=stats(r);const title=r.isArchive?`Run archive <span class="archive-badge">ARCHIVE</span>`:`Run #${r.number} · ${r.rank}`;return `<div class="history-card ${rankClass(r.rank)}"><button data-open="${r.id}"><strong>${title}</strong><div class="date">${dateLabel(r.startedAt)} · ${r.deck||"Deck non renseigné"}</div><div class="run-card-wr">WR ${winRateFor(s.parts).rate}%</div></button><div class="mini-score"><span class="win">${s.wins} W</span> · <span class="loss">${s.losses} L</span></div></div>`}));
   h.innerHTML=cards.length?cards.join(""):"<div class=\"empty\">Aucun Run pour le moment.</div>";
   h.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>detail(b.dataset.open));
   h.querySelectorAll("[data-resume-history]").forEach(b=>b.onclick=openActiveRun);
@@ -111,7 +113,7 @@ function archiveRuns(){
     const ordered=runs.slice().sort((a,b)=>new Date(a.startedAt)-new Date(b.startedAt));
     const latest=ordered.reduce((best,r)=>new Date(r.finishedAt||r.startedAt)>new Date(best.finishedAt||best.startedAt)?r:best,ordered[0]);
     const allParts=ordered.flatMap(r=>(r.parts||[]).map((p,i)=>({...p,archiveSourceRunId:r.id,archiveSourceRunNumber:r.number,archiveSourcePartIndex:i})));
-    return {id:crypto.randomUUID(),isArchive:true,number:Math.max(...ordered.map(r=>r.number||0)),rank:"Archive",deck,deckColors:ordered[ordered.length-1].deckColors||[],deckId:ordered[ordered.length-1].deckId||null,startedAt:latest.finishedAt||latest.startedAt,finishedAt:latest.finishedAt||latest.startedAt,archivedAt:new Date().toISOString(),sourceRunIds:ordered.map(r=>r.id),sourceRunNumbers:ordered.map(r=>r.number),parts:allParts};
+    return {id:crypto.randomUUID(),isArchive:true,number:Math.max(...ordered.map(r=>r.number||0)),rank:highestRank(ordered),deck,deckColors:ordered[ordered.length-1].deckColors||[],deckId:ordered[ordered.length-1].deckId||null,startedAt:latest.finishedAt||latest.startedAt,finishedAt:latest.finishedAt||latest.startedAt,archivedAt:new Date().toISOString(),sourceRunIds:ordered.map(r=>r.id),sourceRunNumbers:ordered.map(r=>r.number),parts:allParts};
   }).sort((a,b)=>new Date(b.startedAt)-new Date(a.startedAt));
   state.runs=[...state.runs.filter(r=>r.isArchive),...archives];
   save();renderHome();

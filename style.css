@@ -66,3 +66,11 @@
 .archive-navigation{display:flex;gap:8px;justify-content:space-between;margin-top:14px}
 .archive-navigation button{flex:1;min-width:0;padding:10px 8px;border-radius:10px;background:#374151;color:#fff;font-size:11px;font-weight:800;line-height:1.25}
 .archive-navigation button:disabled{background:#6b7280;opacity:.35;cursor:default}
+
+
+/* V4.6 — teintes de run selon le rang et WR visible dans les cartes */
+.active-card.rank-platine,.history-card.rank-platine{background:#ecfdf3}
+.active-card.rank-diamant,.history-card.rank-diamant{background:#f3e8ff}
+.active-card.rank-mythic,.history-card.rank-mythic{background:#fef2f2}
+.run-card-wr{margin-top:7px;font-size:12px;font-weight:900;letter-spacing:.01em;color:#111827}
+.history-card .run-card-wr{display:block}
