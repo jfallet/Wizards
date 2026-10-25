@@ -17,6 +17,20 @@ function allParts(deckFilter="__all__"){const parts=[];state.runs.forEach(r=>{if
 function winRateFor(parts){const wins=parts.filter(p=>isWin(p)).length;return {wins,total:parts.length,rate:parts.length?Math.round(wins/parts.length*100):0}}
 function rankClass(rank){const normalized=String(rank||"").toLowerCase();if(normalized.includes("platine"))return "rank-platine";if(normalized.includes("diamant"))return "rank-diamant";if(normalized.includes("mythic")||normalized.includes("mythique"))return "rank-mythic";return ""}
 function highestRank(runs){const order=["Platine","Diamant","Mythic"];return runs.reduce((best,run)=>order.indexOf(run.rank)>order.indexOf(best)?run.rank:best,"Platine")}
+function bo3GameTotals(matches){
+  return matches.reduce((sum,match)=>{
+    const score=String(match.result||"").split("/");
+    if(score.length===2 && score.every(x=>/^[012]$/.test(x))){
+      sum.wins+=Number(score[0]);sum.losses+=Number(score[1]);
+    }
+    return sum;
+  },{wins:0,losses:0});
+}
+function bo3MatchRow(label,matches,fieldPct=null){
+  const wr=winRateFor(matches),games=bo3GameTotals(matches);
+  const share=fieldPct===null?"":` <small class="field-share">(${fieldPct}%)</small>`;
+  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${games.wins} partie(s) gagnée(s) · ${games.losses} partie(s) perdue(s)</small></div><b>${wr.rate}%${share}</b></div>`;
+}
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
 function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
   const total=items.reduce((sum,item)=>sum+item.count,0);
@@ -71,12 +85,12 @@ function renderGlobalStats(){
     const colorGroups={};parts.forEach(p=>{const key=colorCombo(p);(colorGroups[key]||(colorGroups[key]=[])).push(p)});
     const visibleColors=Object.entries(colorGroups).filter(([k,ps])=>ps.length/Math.max(1,parts.length)>.06).sort((a,b)=>b[1].length-a[1].length);
     const others=Object.entries(colorGroups).filter(([k,ps])=>ps.length/Math.max(1,parts.length)<=.06).flatMap(([k,ps])=>ps);
-    const colorRows=visibleColors.map(([k,ps])=>`<div class="global-stat-row"><div><strong>${k} ${colorSymbols(k.split(""))}</strong></div><b>${winRateFor(ps).rate}% <small class="field-share">(${all.length?Math.round(all.filter(p=>colorCombo(p)===k).length/all.length*100):0}%)</small></b></div>`).join("");
+    const colorRows=visibleColors.map(([k,ps])=>bo3MatchRow(`${k} ${colorSymbols(k.split(""))}`,ps,all.length?Math.round(all.filter(p=>colorCombo(p)===k).length/all.length*100):0)).join("");
     const arch={};parts.forEach(p=>(p.archetypes||[]).forEach(a=>(arch[a]||(arch[a]=[])).push(p)));
-    const archetypeRows=Object.entries(arch).sort((a,b)=>b[1].length-a[1].length).map(([a,ps])=>statRow(a,ps)).join("");
+    const archetypeRows=Object.entries(arch).sort((a,b)=>b[1].length-a[1].length).map(([a,ps])=>bo3MatchRow(a,ps)).join("");
     $("globalStats").innerHTML=`<div class="global-group"><label class="field-label" for="statsDeckFilter">Deck</label><select id="statsDeckFilter" class="deck-select">${deckOptions}</select></div>
     <div class="global-summary"><div><span>WR global BO3</span><strong>${winRateFor(parts).rate}%</strong><small>${winRateFor(parts).wins} W · ${parts.length-winRateFor(parts).wins} L · ${parts.length} matchs</small></div></div>
-    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${others.length?statRow("Others",others):""}</div>
+    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${others.length?bo3MatchRow("Others",others):""}</div>
     <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||'<div class="empty">Aucune donnée.</div>'}</div>`;
     $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
     return;

@@ -80,3 +80,8 @@ V4.4 : l’histogramme de répartition Mana Death / OK / Flood affiche les pourc
 ## Version 5 — BO3
 Switch BO1 / BO3, statistiques séparées par format, score BO3 2/0 2/1 1/2 0/2, résultat de première manche, pas de suivi mana/3 terrains en BO3. Archives séparées par format. Les données BO1 restent compatibles.
 \n\n## Version 5.1\n- BO3 : groupe unique « Résultats » : résultat global, Play/Draw, résultat en Play et en Draw.\n- BO3 : groupe « Résultat de la première manche » avec répartitions des scores finaux selon première manche gagnée ou perdue.\n- Même affichage dans les statistiques globales et les archives BO3.\n
+## Version 5.2
+- Un BO3 est un match composé de manches (parties élémentaires).
+- Dans les statistiques BO3 par archétype et par couleurs adverses, le WR reste celui des matchs BO3.
+- Sous chaque ligne : nombre total de manches gagnées et perdues (2/1 = 2 gagnées, 1 perdue).
+- Les statistiques BO1 ne changent pas.
