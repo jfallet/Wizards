@@ -28,6 +28,34 @@ function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabe
   const titleMarkup=title?`<div class="${nested?"distribution-subtitle":"stat-title"}">${title}</div>`:"";
   return `<div class="${wrapperClass}">${titleMarkup}<div class="distribution-bar-wrap"><div class="distribution-bar${showValues?" distribution-bar-values":""}" role="img" aria-label="${title||"Répartition"} : ${items.map(item=>`${item.label} ${item.count}`).join(", ")}">${segments}</div>${edgeMarkup}</div>${winRates}</div>`;
 }
+const BO3_RESULTS=["2/0","2/1","1/2","0/2"];
+const BO3_FIRST_WIN=["freeWin","goodWin","luckyWin"];
+const BO3_FIRST_LOSS=["badLuckLoose","hardLoose","freeLoose"];
+const BO3_FIRST_COLORS={freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"};
+function bo3ResultsBlock(parts){
+  const play=parts.filter(p=>p.mode!=="draw"),draw=parts.filter(p=>p.mode==="draw");
+  const resultItems=xs=>BO3_RESULTS.map(k=>({label:k,count:xs.filter(p=>p.result===k).length,color:bo3Colors[k]}));
+  const total=parts.length;
+  return `<div class="global-group bo3-results-group"><div class="stat-title">Résultats</div>
+    ${distributionGroup("",resultItems(parts),"percent",[],null,true)}
+    ${distributionGroup("",[{label:"PLAY",count:play.length,color:"#374151"},{label:"DRAW",count:draw.length,color:"#9ca3af"}],"none",[{label:"WR Play",parts:play},{label:"WR Draw",parts:draw}],{left:`PLAY ${total?Math.round(play.length/total*100):0}`,right:`DRAW ${total?Math.round(draw.length/total*100):0}`},true)}
+    ${distributionGroup("",resultItems(play),"percent",[],null,true)}
+    ${distributionGroup("",resultItems(draw),"percent",[],null,true)}
+  </div>`;
+}
+function bo3FirstGameBlock(parts){
+  const firstItems=Object.keys(labels).map(k=>({label:labels[k],count:parts.filter(p=>p.firstGameResult===k).length,color:BO3_FIRST_COLORS[k]}));
+  const won=parts.filter(p=>BO3_FIRST_WIN.includes(p.firstGameResult));
+  const lost=parts.filter(p=>BO3_FIRST_LOSS.includes(p.firstGameResult));
+  const resultItems=xs=>BO3_RESULTS.map(k=>({label:k,count:xs.filter(p=>p.result===k).length,color:bo3Colors[k]}));
+  return `<div class="global-group bo3-first-game-group"><div class="stat-title">Résultat de la première manche</div>
+    ${distributionGroup("",firstItems,"percent",[],null,true)}
+    <div class="bo3-breakdown-label">Première manche gagnée</div>
+    ${distributionGroup("",resultItems(won),"percent",[],null,true)}
+    <div class="bo3-breakdown-label">Première manche perdue</div>
+    ${distributionGroup("",resultItems(lost),"percent",[],null,true)}
+  </div>`;
+}
 function renderGlobalStats(){
   const all=allParts();
   const deckNames=[...new Set([...state.runs.filter(r=>formatOf(r)===selectedFormat).map(r=>r.deck),...(state.active&&formatOf(state.active)===selectedFormat?[state.active.deck]:[])].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -48,12 +76,7 @@ function renderGlobalStats(){
     const archetypeRows=Object.entries(arch).sort((a,b)=>b[1].length-a[1].length).map(([a,ps])=>statRow(a,ps)).join("");
     $("globalStats").innerHTML=`<div class="global-group"><label class="field-label" for="statsDeckFilter">Deck</label><select id="statsDeckFilter" class="deck-select">${deckOptions}</select></div>
     <div class="global-summary"><div><span>WR global BO3</span><strong>${winRateFor(parts).rate}%</strong><small>${winRateFor(parts).wins} W · ${parts.length-winRateFor(parts).wins} L · ${parts.length} matchs</small></div></div>
-    ${distributionGroup("Répartition des résultats",resultItems,"percent")}
-    ${distributionGroup("Résultat de la première manche",Object.keys(labels).map(k=>({label:labels[k],count:parts.filter(p=>p.firstGameResult===k).length,color:({freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"})[k]})),"percent")}
-    ${distributionGroup("Play / Draw",[{label:"PLAY",count:playParts.length,color:"#16a34a"},{label:"DRAW",count:drawParts.length,color:"#2563eb"}],"none",[{label:"WR Play",parts:playParts},{label:"WR Draw",parts:drawParts}],{left:parts.length?Math.round(playParts.length/parts.length*100):0,right:parts.length?Math.round(drawParts.length/parts.length*100):0})}
-    <div class="global-group"><div class="stat-title">Résultats en Play</div>${distributionGroup("",outcomes.map(k=>({label:k,count:playParts.filter(p=>p.result===k).length,color:bo3Colors[k]})),"percent",[],null,true)}</div>
-    <div class="global-group"><div class="stat-title">Résultats en Draw</div>${distributionGroup("",outcomes.map(k=>({label:k,count:drawParts.filter(p=>p.result===k).length,color:bo3Colors[k]})),"percent",[],null,true)}</div>
-    <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${others.length?statRow("Others",others):""}</div>
+    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${others.length?statRow("Others",others):""}</div>
     <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||'<div class="empty">Aucune donnée.</div>'}</div>`;
     $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
     return;
@@ -174,9 +197,7 @@ function detail(id){
       const ix=archives.findIndex(x=>x.id===r.id);
       const newer=ix>0?archives[ix-1]:null,older=ix>=0&&ix<archives.length-1?archives[ix+1]:null;
       $("detailContent").innerHTML=`<div class="global-summary"><div><span>WR global BO3</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} matchs</small></div><div class="archive-navigation"><button data-nav="newer" ${newer?"":"disabled"}>← Archive précédente</button><button data-nav="older" ${older?"":"disabled"}>Archive suivante →</button></div></div>
-      ${distributionGroup("Répartition des résultats",keys.map(k=>({label:k,count:parts.filter(p=>p.result===k).length,color:bo3Colors[k]})),"percent")}
-      ${distributionGroup("Play / Draw",[{label:"PLAY",count:play.length,color:"#16a34a"},{label:"DRAW",count:draw.length,color:"#2563eb"}],"none",[{label:"WR Play",parts:play},{label:"WR Draw",parts:draw}],{left:parts.length?Math.round(play.length/parts.length*100):0,right:parts.length?Math.round(draw.length/parts.length*100):0})}
-      <div class="global-group"><div class="stat-title">Résultat de la première manche</div>${distributionGroup("",Object.keys(labels).map(k=>({label:labels[k],count:parts.filter(p=>p.firstGameResult===k).length,color:({freeLoose:"#7f1d1d",hardLoose:"#dc2626",badLuckLoose:"#f97316",luckyWin:"#2563eb",goodWin:"#16a34a",freeWin:"#166534"})[k]})),"percent")}</div>`;
+      ${bo3ResultsBlock(parts)}\n      ${bo3FirstGameBlock(parts)}`;
       $("detailContent").querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>detail((b.dataset.nav==="newer"?newer:older).id));
       return;
     }

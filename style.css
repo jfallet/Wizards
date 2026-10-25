@@ -89,3 +89,8 @@
 .first-game-grid span{display:block;text-align:center;padding:11px 4px;border:1px solid #cbd5e1;border-radius:9px;font-size:12px;font-weight:700}
 .first-game-grid input:checked+span{background:#dbeafe;border:2px solid #2563eb}
 .bo3-only.hidden,.bo1-only.hidden{display:none!important}
+
+/* V5.1 : groupes compacts de résultats BO3 */
+.bo3-results-group .distribution-subgroup,
+.bo3-first-game-group .distribution-subgroup { margin-top: 7px; margin-bottom: 7px; }
+.bo3-breakdown-label { font-size: 0.78rem; font-weight: 600; margin-top: 11px; margin-bottom: 3px; opacity: .8; }
