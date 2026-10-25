@@ -85,3 +85,7 @@ Switch BO1 / BO3, statistiques séparées par format, score BO3 2/0 2/1 1/2 0/2,
 - Dans les statistiques BO3 par archétype et par couleurs adverses, le WR reste celui des matchs BO3.
 - Sous chaque ligne : nombre total de manches gagnées et perdues (2/1 = 2 gagnées, 1 perdue).
 - Les statistiques BO1 ne changent pas.
+
+## Version 5.3
+- WR du BO3 selon première manche gagnée ou perdue, sur accueil et archives.
+- Détail archétypes/couleurs : nombre de BO et manches gagnées/perdues.

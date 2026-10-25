@@ -94,3 +94,6 @@
 .bo3-results-group .distribution-subgroup,
 .bo3-first-game-group .distribution-subgroup { margin-top: 7px; margin-bottom: 7px; }
 .bo3-breakdown-label { font-size: 0.78rem; font-weight: 600; margin-top: 11px; margin-bottom: 3px; opacity: .8; }
+
+/* V5.3 */
+.bo3-first-wr{font-weight:700;margin-left:8px;}

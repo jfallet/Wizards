@@ -29,7 +29,7 @@ function bo3GameTotals(matches){
 function bo3MatchRow(label,matches,fieldPct=null){
   const wr=winRateFor(matches),games=bo3GameTotals(matches);
   const share=fieldPct===null?"":` <small class="field-share">(${fieldPct}%)</small>`;
-  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${games.wins} partie(s) gagnée(s) · ${games.losses} partie(s) perdue(s)</small></div><b>${wr.rate}%${share}</b></div>`;
+  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${matches.length} BO joués pour ${games.wins} parties gagnées et ${games.losses} perdues</small></div><b>${wr.rate}%${share}</b></div>`;
 }
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
 function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
@@ -64,9 +64,9 @@ function bo3FirstGameBlock(parts){
   const resultItems=xs=>BO3_RESULTS.map(k=>({label:k,count:xs.filter(p=>p.result===k).length,color:bo3Colors[k]}));
   return `<div class="global-group bo3-first-game-group"><div class="stat-title">Résultat de la première manche</div>
     ${distributionGroup("",firstItems,"percent",[],null,true)}
-    <div class="bo3-breakdown-label">Première manche gagnée</div>
+    <div class="bo3-breakdown-label">Première manche gagnée <span class="bo3-first-wr">WR ${winRateFor(won).rate}%</span></div>
     ${distributionGroup("",resultItems(won),"percent",[],null,true)}
-    <div class="bo3-breakdown-label">Première manche perdue</div>
+    <div class="bo3-breakdown-label">Première manche perdue <span class="bo3-first-wr">WR ${winRateFor(lost).rate}%</span></div>
     ${distributionGroup("",resultItems(lost),"percent",[],null,true)}
   </div>`;
 }
