@@ -3,7 +3,7 @@ const labels={freeWin:"FREE WIN",goodWin:"GOOD WIN",luckyWin:"LUCKY WIN",badLuck
 const bo3Labels={"2/0":"2/0","2/1":"2/1","1/2":"1/2","0/2":"0/2"};
 const bo3Colors={"2/0":"#166534","2/1":"#16a34a","1/2":"#f97316","0/2":"#dc2626"};
 const typeClass={freeWin:"win",goodWin:"win",luckyWin:"lucky",badLuckLoose:"loss",hardLoose:"loss",freeLoose:"loss"};
-let state=JSON.parse(localStorage.getItem(KEY)||'{"runs":[],"active":null}'); state.decks=state.decks||[]; let selectedRank="Platine"; let selectedFormat=state.selectedFormat==="BO3"?"BO3":"BO1"; let deferredPrompt=null; let editingPartIndex=null; let selectedStatsDeck="__all__";
+let state=JSON.parse(localStorage.getItem(KEY)||'{"runs":[],"active":null}'); state.decks=state.decks||[]; state.opponentDecks=state.opponentDecks||[]; let selectedRank="Platine"; let selectedFormat=state.selectedFormat==="BO3"?"BO3":"BO1"; let deferredPrompt=null; let editingPartIndex=null; let selectedStatsDeck="__all__";
 const $=id=>document.getElementById(id);
 const formatOf=r=>r?.format==="BO3"?"BO3":"BO1";
 const isWin=p=>p?.result==="2/0"||p?.result==="2/1"||typeClass[p?.result]==="win"||typeClass[p?.result]==="lucky";
@@ -70,6 +70,39 @@ function bo3FirstGameBlock(parts){
     ${distributionGroup("",resultItems(lost),"percent",[],null,true)}
   </div>`;
 }
+const esc=x=>String(x??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+let editingOpponentId=null;
+function opponentOf(p){return state.opponentDecks.find(d=>d.id===p.opponentDeckId)||null}
+function opponentName(p){return p.opponentDeckName||opponentOf(p)?.name||"Autre"}
+function opponentKey(p){return p.opponentDeckId?"id:"+p.opponentDeckId:"name:"+opponentName(p)}
+function opponentGroups(parts){const groups={};parts.forEach(part=>{const k=opponentKey(part);(groups[k]||(groups[k]=[])).push(part)});return Object.entries(groups).sort((a,b)=>b[1].length-a[1].length)}
+function opponentStats(parts,all,bo3=false){
+ const groups=opponentGroups(parts), total=parts.length;
+ const rows=groups.map(([key,ps])=>{
+  const name=opponentName(ps[0]), share=all.length?Math.round(all.filter(x=>opponentKey(x)===key).length/all.length*100):0;
+  const color=canonicalColors(ps[0].colors||[]);
+  const label=`${esc(name)} <small>${color.join("")} ${colorSymbols(color)}</small>`;
+  if(bo3)return bo3MatchRow(label,ps,share);
+  const wr=winRateFor(ps);
+  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${wr.wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${wr.rate}% <small class="field-share">(${share}%)</small></b></div>`;
+ }).join("");
+ return `<div class="global-group"><div class="stat-title">WR par deck adverse</div>${rows||'<div class="empty">Aucune partie à afficher.</div>'}</div>`;
+}
+function renderOpponentLibrary(){
+ $("opponentLibrarySummary").textContent=`${state.opponentDecks.length} deck(s) adverse(s) enregistré(s)`;
+ $("opponentDeckList").innerHTML=state.opponentDecks.map(d=>`<div class="opponent-library-item"><div><strong>${esc(d.name)}</strong><small>${esc(d.archetype)} · ${canonicalColors(d.colors).join("")} ${colorSymbols(d.colors)}</small></div><div><button class="text-btn" data-edit-opponent="${esc(d.id)}">Modifier</button><button class="text-btn" data-remove-opponent="${esc(d.id)}">Effacer</button></div></div>`).join("")||'<div class="empty">Aucun deck adverse défini.</div>';
+ $("opponentDeckList").querySelectorAll("[data-edit-opponent]").forEach(b=>b.onclick=()=>{const d=state.opponentDecks.find(x=>x.id===b.dataset.editOpponent);if(!d)return;editingOpponentId=d.id;$("opponentDeckName").value=d.name;$("libraryOpponentArchetype").value=d.archetype;document.querySelectorAll('input[name="libraryOpponentColor"]').forEach(x=>x.checked=d.colors.includes(x.value));$("cancelOpponentEditBtn").classList.remove("hidden")});
+ $("opponentDeckList").querySelectorAll("[data-remove-opponent]").forEach(b=>b.onclick=()=>{const d=state.opponentDecks.find(x=>x.id===b.dataset.removeOpponent);if(!d||!confirm(`Supprimer « ${d.name} » de la bibliothèque ? Les parties enregistrées conserveront leur nom.`))return;state.opponentDecks=state.opponentDecks.filter(x=>x.id!==d.id);save();renderOpponentLibrary()});
+}
+function resetOpponentEditor(){editingOpponentId=null;$("opponentDeckName").value="";document.querySelectorAll('input[name="libraryOpponentColor"]').forEach(x=>x.checked=false);$("libraryOpponentArchetype").value="Aggro";$("cancelOpponentEditBtn").classList.add("hidden")}
+function renderOpponentSelect(value="__other__"){
+ const options=state.opponentDecks.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>`<option value="${esc(d.id)}">${esc(d.name)} · ${canonicalColors(d.colors).join("")} · ${esc(d.archetype)}</option>`).join("");
+ $("opponentDeckSelect").innerHTML=`${options}<option value="__other__">Autre (hors liste)</option>`;
+ $("opponentDeckSelect").value=value;
+ if($("opponentDeckSelect").selectedIndex<0)$("opponentDeckSelect").value="__other__";
+ updateOpponentFields();
+}
+function updateOpponentFields(){$("otherOpponentFields").classList.toggle("hidden",$("opponentDeckSelect").value!=="__other__")}
 function renderGlobalStats(){
   const all=allParts();
   const deckNames=[...new Set([...state.runs.filter(r=>formatOf(r)===selectedFormat).map(r=>r.deck),...(state.active&&formatOf(state.active)===selectedFormat?[state.active.deck]:[])].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -90,7 +123,7 @@ function renderGlobalStats(){
     const archetypeRows=Object.entries(arch).sort((a,b)=>b[1].length-a[1].length).map(([a,ps])=>bo3MatchRow(a,ps)).join("");
     $("globalStats").innerHTML=`<div class="global-group"><label class="field-label" for="statsDeckFilter">Deck</label><select id="statsDeckFilter" class="deck-select">${deckOptions}</select></div>
     <div class="global-summary"><div><span>WR global BO3</span><strong>${winRateFor(parts).rate}%</strong><small>${winRateFor(parts).wins} W · ${parts.length-winRateFor(parts).wins} L · ${parts.length} matchs</small></div></div>
-    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${others.length?bo3MatchRow("Others",others):""}</div>
+    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    ${opponentStats(parts,all,true)}
     <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||'<div class="empty">Aucune donnée.</div>'}</div>`;
     $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
     return;
@@ -130,11 +163,11 @@ function renderGlobalStats(){
   </div>
   ${distributionGroup("",[{label:"DEATH",count:death,color:"#111827"},{label:"OK",count:ok,color:"#16a34a"},{label:"FLOOD",count:flood,color:"#2563eb"}],"percent",[{label:"WR Death",parts:manaDeathParts},{label:"WR OK",parts:manaOkParts},{label:"WR Flood",parts:manaFloodParts}])}
   ${distributionGroup("",[{label:"OUI",count:t3yes,color:"#16a34a"},{label:"NON",count:t3no,color:"#dc2626"}],"none",[{label:"WR 3 lands OK",parts:t3yesParts},{label:"WR 3 lands NON",parts:t3noParts}],{left:`${t3yesPct}`,right:`${t3noPct}`})}
-  <div class="global-group"><div class="stat-title">WR par combinaison de couleurs adverse</div>${colorRows}${othersRow||""}${!colorRows&&!othersRow?"<div class=\"empty\">Aucune partie à afficher.</div>":""}</div>
+  ${opponentStats(parts,all,false)}
   <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||"<div class=\"empty\">Aucune partie avec un archétype renseigné.</div>"}</div>`;
   $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
 }
-function renderHome(){
+function renderHome(){renderOpponentLibrary();
   const a=$("activeCard");
   if(state.active&&formatOf(state.active)===selectedFormat){
     const s=stats(state.active);
@@ -159,26 +192,26 @@ function colorCombo(p){const c=canonicalColors(p.colors);return c.length?c.join(
 function colorSymbols(colors){const symbols={R:"🔥",U:"💧",B:"☠",W:"☀",G:"🌳"};return canonicalColors(colors).map(c=>`<span class="mana-symbol mana-${c}" title="${c}">${symbols[c]}</span>`).join("")||"—"}
 function renderDeckOptions(selected=""){const el=$("deckSelect");el.innerHTML=state.decks.length?state.decks.map((d,i)=>`<option value="${i}" ${String(i)===String(selected)?"selected":""}>${d.name} · ${canonicalColors(d.colors).join("")||"Sans couleur"}</option>`).join(""):`<option value="">Aucun deck — ajoute-en un ci-dessous</option>`;}
 function addDeck(){const name=$("newDeckName").value.trim();if(!name){alert("Donne un nom à ce deck.");return}const colors=canonicalColors([...document.querySelectorAll('input[name="myDeckColor"]:checked')].map(x=>x.value));const existing=state.decks.findIndex(d=>d.name.toLowerCase()===name.toLowerCase());const deck={name,colors};if(existing>=0){state.decks[existing]=deck;renderDeckOptions(existing)}else{state.decks.push(deck);renderDeckOptions(state.decks.length-1)}save();$("newDeckName").value="";document.querySelectorAll('input[name="myDeckColor"]').forEach(x=>x.checked=false)}
-function partMetaText(p){const mode=p.mode==="draw"?"DRAW":"PLAY";const archetypes=(p.archetypes||[]).join(" / ")||"Archétype non renseigné";const colors=`${canonicalColors(p.colors).join("")} ${colorSymbols(p.colors)}`;if(p.result in bo3Labels)return `${mode} · ${archetypes} · ${colors} · 1re manche : ${labels[p.firstGameResult]||"—"}`;const mana={death:"DEATH",ok:"OK",flood:"FLOOD"}[p.mana]||"OK";const t3=p.landT3===false?"3L T3 NON":"3L T3 OUI";return `${mode} · ${archetypes} · ${colors} · ${mana} · ${t3}`}
+function partMetaText(p){const opponent=`${opponentName(p)} · `;const mode=p.mode==="draw"?"DRAW":"PLAY";const archetypes=(p.archetypes||[]).join(" / ")||"Archétype non renseigné";const colors=`${canonicalColors(p.colors).join("")} ${colorSymbols(p.colors)}`;if(p.result in bo3Labels)return `${mode} · ${opponent}${archetypes} · ${colors} · 1re manche : ${labels[p.firstGameResult]||"—"}`;const mana={death:"DEATH",ok:"OK",flood:"FLOOD"}[p.mana]||"OK";const t3=p.landT3===false?"3L T3 NON":"3L T3 OUI";return `${mode} · ${opponent}${archetypes} · ${colors} · ${mana} · ${t3}`}
 
 function renderRun(){const r=state.active;if(!r)return;const s=stats(r);$("runNumber").textContent=`Run #${r.number}`;$("runMeta").innerHTML=`<div class="run-info"><span class="rank-badge">${r.rank}</span><span>${r.deck||"Deck non renseigné"}</span></div>`;$("partCount").textContent=s.parts.length;$("partCount").nextElementSibling.textContent=`partie${s.parts.length>1?"s":""}`;$("wins").textContent=`${s.wins} wins`;$("losses").textContent=`${s.losses} losses`;$("parts").innerHTML=s.parts.length?s.parts.map((p,i)=>`<div class="part-row ${i===editingPartIndex?"editing":""}"><span class="part-num">#${i+1}</span><i class="dot ${resultClass(p)}"></i><span class="part-name">${resultLabel(p)}<small class="part-meta">${partMetaText(p)}</small></span>${state.active?`<button class="edit-part" data-edit-part="${i}" aria-label="Modifier la partie ${i+1}">✎</button>`:""}</div>`).join(""):'<div class="empty">Aucune partie. Ajoute ta première partie.</div>'}
 function openActiveRun(){if(!state.active)return;editingPartIndex=null;renderRun();show("runView")}
 function openStart(){if(state.active){if(formatOf(state.active)!==selectedFormat){alert("Termine le run en cours avant de démarrer un run dans un autre format.");return}openActiveRun();return}selectedRank="Platine";document.querySelectorAll(".rank").forEach(b=>b.classList.toggle("selected",b.dataset.rank===selectedRank));renderDeckOptions(state.decks.length?state.decks.length-1:"");show("startView")}
 function startRun(){const d=state.decks[Number($("deckSelect").value)];if(!d){alert("Ajoute ou sélectionne un deck avant de démarrer le Run.");return}state.active={id:crypto.randomUUID(),number:nextNumber(),rank:selectedRank,format:selectedFormat,deck:d.name,deckColors:d.colors||[],deckId:d.id||null,startedAt:new Date().toISOString(),parts:[]};save();renderRun();show("runView")}
-function editPart(index){if(!state.active||!state.active.parts[index])return;editingPartIndex=index;const p=state.active.parts[index];$("partTitle").textContent=`Modifier la partie #${index+1}`;resetPartForm();document.querySelector(`input[name="mode"][value="${p.mode||"play"}"]`).checked=true;(p.archetypes||[]).forEach(v=>{const el=document.querySelector(`input[name="archetype"][value="${v}"]`);if(el)el.checked=true});(p.colors||[]).forEach(v=>{const el=document.querySelector(`input[name="opponentColor"][value="${v}"]`);if(el)el.checked=true});if(formatOf(state.active)!=="BO3")document.querySelector(`input[name="mana"][value="${p.mana||"ok"}"]`).checked=true;if(formatOf(state.active)!=="BO3")document.querySelector(`input[name="landT3"][value="${p.landT3===false?"no":"yes"}"]`).checked=true;document.querySelectorAll(".result").forEach(b=>b.classList.toggle("selected-result",b.dataset.result===p.result));if(formatOf(state.active)==="BO3")document.querySelectorAll('input[name="firstGameResult"]').forEach(x=>x.checked=x.value===p.firstGameResult);updatePartMode();show("partView")}
+function editPart(index){if(!state.active||!state.active.parts[index])return;editingPartIndex=index;const p=state.active.parts[index];$("partTitle").textContent=`Modifier la partie #${index+1}`;resetPartForm();renderOpponentSelect(p.opponentDeckId||"__other__");document.querySelector(`input[name="mode"][value="${p.mode||"play"}"]`).checked=true;(p.archetypes||[]).forEach(v=>{const el=document.querySelector(`input[name="archetype"][value="${v}"]`);if(el)el.checked=true});(p.colors||[]).forEach(v=>{const el=document.querySelector(`input[name="opponentColor"][value="${v}"]`);if(el)el.checked=true});if(formatOf(state.active)!=="BO3")document.querySelector(`input[name="mana"][value="${p.mana||"ok"}"]`).checked=true;if(formatOf(state.active)!=="BO3")document.querySelector(`input[name="landT3"][value="${p.landT3===false?"no":"yes"}"]`).checked=true;document.querySelectorAll(".result").forEach(b=>b.classList.toggle("selected-result",b.dataset.result===p.result));if(formatOf(state.active)==="BO3")document.querySelectorAll('input[name="firstGameResult"]').forEach(x=>x.checked=x.value===p.firstGameResult);updatePartMode();show("partView")}
 function finishRun(){if(!state.active)return;if(!state.active.parts.length&&!confirm("Ce Run ne contient aucune partie. Le terminer quand même ?"))return;state.active.finishedAt=new Date().toISOString();state.runs.push(state.active);state.active=null;save();renderHome();show("homeView")}
 function selectedValue(name,fallback){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:fallback}
-function resetPartForm(){document.querySelectorAll(".result").forEach(b=>b.classList.remove("selected-result"));document.querySelector('input[name="mode"][value="play"]').checked=true;document.querySelectorAll('input[name="archetype"]').forEach(i=>i.checked=false);document.querySelectorAll('input[name="opponentColor"]').forEach(i=>i.checked=false);document.querySelectorAll('input[name="firstGameResult"]').forEach(i=>i.checked=false);document.querySelector('input[name="mana"][value="ok"]').checked=true;document.querySelector('input[name="landT3"][value="yes"]').checked=true}
-function addPart(result){const mode=selectedValue("mode","play");const archetypes=selectedValues("archetype");const colors=canonicalColors(selectedValues("opponentColor"));const mana=selectedValue("mana","ok");const landT3=selectedValue("landT3","yes")==="yes";
+function resetPartForm(){renderOpponentSelect();document.querySelectorAll(".result").forEach(b=>b.classList.remove("selected-result"));document.querySelector('input[name="mode"][value="play"]').checked=true;document.querySelectorAll('input[name="archetype"]').forEach(i=>i.checked=false);document.querySelectorAll('input[name="opponentColor"]').forEach(i=>i.checked=false);document.querySelectorAll('input[name="firstGameResult"]').forEach(i=>i.checked=false);document.querySelector('input[name="mana"][value="ok"]').checked=true;document.querySelector('input[name="landT3"][value="yes"]').checked=true}
+function addPart(result){const selectedOpponent=opponentOf({opponentDeckId:$("opponentDeckSelect").value});const opponentDeckId=selectedOpponent?.id||null;const opponentDeckName=selectedOpponent?.name||"Autre";const mode=selectedValue("mode","play");const archetypes=selectedOpponent?[selectedOpponent.archetype]:selectedValues("archetype");const colors=selectedOpponent?canonicalColors(selectedOpponent.colors):canonicalColors(selectedValues("opponentColor"));const mana=selectedValue("mana","ok");const landT3=selectedValue("landT3","yes")==="yes";
   if(formatOf(state.active)==="BO3"){
     const firstGameResult=selectedValue("firstGameResult",null);
     if(!firstGameResult){alert("Sélectionne le résultat de la première manche.");return}
-    const part={result,mode,archetypes,colors,firstGameResult,at:new Date().toISOString()};
+    const part={result,mode,archetypes,colors,opponentDeckId,opponentDeckName,firstGameResult,at:new Date().toISOString()};
     if(editingPartIndex!==null){state.active.parts[editingPartIndex]={...state.active.parts[editingPartIndex],...part};editingPartIndex=null}
     else state.active.parts.push(part);
     save();renderRun();show("runView");return;
   }
-  if(editingPartIndex!==null){const old=state.active.parts[editingPartIndex];state.active.parts[editingPartIndex]={...old,result,mode,archetypes,colors,mana,landT3};editingPartIndex=null}else state.active.parts.push({result,mode,archetypes,colors,mana,landT3,at:new Date().toISOString()});save();renderRun();show("runView")}
+  if(editingPartIndex!==null){const old=state.active.parts[editingPartIndex];state.active.parts[editingPartIndex]={...old,result,mode,archetypes,colors,opponentDeckId,opponentDeckName,mana,landT3};editingPartIndex=null}else state.active.parts.push({result,mode,archetypes,colors,opponentDeckId,opponentDeckName,mana,landT3,at:new Date().toISOString()});save();renderRun();show("runView")}
 function archiveRuns(){
   const pending=state.runs.filter(r=>!r.isArchive&&formatOf(r)===selectedFormat);
   if(!pending.length){alert("Aucune run à archiver. Les archives existantes sont conservées séparément.");return}
@@ -279,3 +312,17 @@ $("formatSwitch").onchange=e=>{
 $("formatSwitch").checked=selectedFormat==="BO3";
 const oldAddPart=$("addPartBtn").onclick;
 $("addPartBtn").onclick=()=>{oldAddPart();updatePartMode()};
+
+$("manageOpponentsBtn").onclick=()=>{resetOpponentEditor();renderOpponentLibrary();show("opponentsView")};
+$("opponentsBackBtn").onclick=()=>{renderHome();show("homeView")};
+$("cancelOpponentEditBtn").onclick=resetOpponentEditor;
+$("saveOpponentDeckBtn").onclick=()=>{
+ const name=$("opponentDeckName").value.trim(),colors=canonicalColors(selectedValues("libraryOpponentColor")),archetype=$("libraryOpponentArchetype").value;
+ if(!name||name.toLowerCase()==="autre"){alert("Choisis un nom de deck différent de « Autre ».");return}
+ if(!colors.length){alert("Sélectionne au moins une couleur.");return}
+ if(state.opponentDecks.some(d=>d.name.toLowerCase()===name.toLowerCase()&&d.id!==editingOpponentId)){alert("Ce nom existe déjà.");return}
+ if(editingOpponentId){const d=state.opponentDecks.find(x=>x.id===editingOpponentId);if(d)Object.assign(d,{name,colors,archetype})}
+ else state.opponentDecks.push({id:crypto.randomUUID(),name,colors,archetype});
+ save();resetOpponentEditor();renderOpponentLibrary();
+};
+$("opponentDeckSelect").onchange=updateOpponentFields;

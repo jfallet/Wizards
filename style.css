@@ -97,3 +97,9 @@
 
 /* V5.3 */
 .bo3-first-wr{font-weight:700;margin-left:8px;}
+
+.opponent-library-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 4px;border-bottom:1px solid #e5e7eb}
+.opponent-library-item small{display:block;margin-top:4px;opacity:.7}
+.opponent-library-item button{font-size:.8rem}
+#opponentLibrarySummary{font-size:.85rem;opacity:.75;margin-bottom:8px}
+#otherOpponentFields.hidden{display:none}

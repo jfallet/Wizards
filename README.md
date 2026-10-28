@@ -89,3 +89,11 @@ Switch BO1 / BO3, statistiques séparées par format, score BO3 2/0 2/1 1/2 0/2,
 ## Version 5.3
 - WR du BO3 selon première manche gagnée ou perdue, sur accueil et archives.
 - Détail archétypes/couleurs : nombre de BO et manches gagnées/perdues.
+
+## Version 6 — Decks adverses
+- Bibliothèque persistante des decks adverses (nom, couleurs, archétype), gestion depuis l'accueil.
+- Saisie : sélection d'un deck prédéfini, ou « Autre » pour choisir manuellement couleurs et archétype.
+- Les statistiques par combinaison de couleurs sont remplacées par des statistiques par type de deck adverse, en BO1 et BO3.
+- Les anciennes parties sans type de deck enregistré sont regroupées sous « Autre ».
+- Les noms des decks sélectionnés sont conservés sur les parties pour l'historique.
+- Stockage existant inchangé.
