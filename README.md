@@ -97,3 +97,9 @@ Switch BO1 / BO3, statistiques séparées par format, score BO3 2/0 2/1 1/2 0/2,
 - Les anciennes parties sans type de deck enregistré sont regroupées sous « Autre ».
 - Les noms des decks sélectionnés sont conservés sur les parties pour l'historique.
 - Stockage existant inchangé.
+
+
+## Version 7
+- Saisie du nombre de terrains (0 à 7) dans la main de départ pour chaque partie BO1.
+- En BO3, saisie indépendante pour chacune des trois manches ; les champs non renseignés sont ignorés, notamment si la troisième manche n’a pas été jouée.
+- Histogramme de répartition des mains de départ (0 à 7 terrains), dans les statistiques globales et les archives.
