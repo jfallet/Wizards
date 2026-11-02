@@ -72,7 +72,7 @@ function bo3FirstGameBlock(parts){
 }
 function openingLandsBlock(parts,bo3=false){
   const values=parts.flatMap(p=>bo3?(Array.isArray(p.openingLands)?p.openingLands:[]):(p.openingLands===0||p.openingLands? [p.openingLands]:[])).filter(v=>v!==null&&v!==undefined&&v!==""&&Number.isInteger(Number(v))&&Number(v)>=0&&Number(v)<=7).map(Number);
-  const items=Array.from({length:8},(_,n)=>({label:String(n),count:values.filter(v=>v===n).length,color:n===0?"#9ca3af":"#2563eb"}));
+  const items=Array.from({length:8},(_,n)=>({label:String(n),count:values.filter(v=>v===n).length,color:["#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#6366f1","#a855f7","#4c1d95"][n]}));
   return distributionGroup("Nombre de terrains en main de départ",items,"percent");
 }
 const esc=x=>String(x??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
