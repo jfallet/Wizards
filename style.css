@@ -104,3 +104,8 @@
 #opponentLibrarySummary{font-size:.85rem;opacity:.75;margin-bottom:8px}
 #otherOpponentFields.hidden{display:none}
 .opening-lands-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 14px}.opening-lands-grid label{display:block;min-width:0}.opening-lands-grid label span{display:block;font-size:11px;font-weight:800;color:#6b7280;margin:0 0 5px}.opening-lands-grid .deck-select{padding:10px 6px;font-size:12px}
+
+/* V7.3 : histogramme des parties sidées compact */
+.bo3-sideboard-group .distribution-bar-wrap .distribution-bar { margin: 3px 0; height: 18px; }
+.bo3-sideboard-group .distribution-bar-wrap .distribution-bar-values { height: 18px; }
+.bo3-sideboard-group .sideboard-total { margin-top: 5px; color: #6b7280; font-size: 10px; font-weight: 700; line-height: 1.2; }

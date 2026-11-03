@@ -121,3 +121,9 @@ Switch BO1 / BO3, statistiques séparées par format, score BO3 2/0 2/1 1/2 0/2,
 - L’histogramme « Nombre de terrains en main de départ » utilise une couleur de l’arc-en-ciel pour chaque valeur de 0 à 6 : rouge, orange, jaune, vert, bleu, indigo et violet.
 - La valeur 7 utilise un violet foncé.
 - Incrémentation du cache du service worker pour forcer le chargement de cette version.
+
+
+## Version 7.3
+- Titre de la section raccourci en « Parties sidées ».
+- Histogramme des parties sidées rendu plus compact.
+- Remplacement de la ligne de winrate par le seul récapitulatif du volume : « X parties après sideboard · Y W - Z L ». Le winrate reste visible dans l’histogramme.

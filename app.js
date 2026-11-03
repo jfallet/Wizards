@@ -81,10 +81,10 @@ function bo3SideboardBlock(parts){
     wins+=score[0]-(firstWon?1:0);
     losses+=score[1]-(firstLost?1:0);
   });
-  const total=wins+losses, wr=total?Math.round(wins/total*100):0;
-  return `<div class="global-group bo3-sideboard-group"><div class="stat-title">Parties sidées (manches 2 et 3)</div>
+  const total=wins+losses;
+  return `<div class="global-group bo3-sideboard-group"><div class="stat-title">Parties sidées</div>
     ${distributionGroup("",[{label:"W",count:wins,color:"#16a34a"},{label:"L",count:losses,color:"#dc2626"}],"percent")}
-    <div class="global-stat-row"><div><strong>Winrate des parties sidées</strong><small>${total} parties après sideboard · ${wins} W - ${losses} L</small></div><b>${wr}%</b></div>
+    <div class="sideboard-total">${total} parties après sideboard · ${wins} W - ${losses} L</div>
   </div>`;
 }
 function openingLandsBlock(parts,bo3=false){
