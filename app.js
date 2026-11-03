@@ -29,7 +29,7 @@ function bo3GameTotals(matches){
 function bo3MatchRow(label,matches,fieldPct=null){
   const wr=winRateFor(matches),games=bo3GameTotals(matches);
   const share=fieldPct===null?"":` <small class="field-share">(${fieldPct}%)</small>`;
-  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${matches.length} BO joués pour ${games.wins} parties gagnées et ${games.losses} perdues</small></div><b>${wr.rate}%${share}</b></div>`;
+  return `<div class="global-stat-row"><div><strong>${label}</strong><small>${matches.length} BO joués pour ${games.wins} W - ${games.losses} L</small></div><b>${wr.rate}%${share}</b></div>`;
 }
 function statRow(label,parts){const s=winRateFor(parts);return `<div class="global-stat-row"><div><strong>${label}</strong><small>${s.wins} victoire${s.wins>1?"s":""} · ${s.total} partie${s.total>1?"s":""}</small></div><b>${s.rate}%</b></div>`}
 function distributionGroup(title,items,valueMode="none",winRateItems=[],edgeLabels=null,nested=false){
@@ -70,6 +70,23 @@ function bo3FirstGameBlock(parts){
     ${distributionGroup("",resultItems(lost),"percent",[],null,true)}
   </div>`;
 }
+function bo3SideboardBlock(parts){
+  let wins=0,losses=0;
+  parts.forEach(p=>{
+    const score=String(p.result||"").split("/").map(Number);
+    if(score.length!==2||score.some(n=>!Number.isFinite(n)))return;
+    const firstWon=BO3_FIRST_WIN.includes(p.firstGameResult);
+    const firstLost=BO3_FIRST_LOSS.includes(p.firstGameResult);
+    if(!firstWon&&!firstLost)return;
+    wins+=score[0]-(firstWon?1:0);
+    losses+=score[1]-(firstLost?1:0);
+  });
+  const total=wins+losses, wr=total?Math.round(wins/total*100):0;
+  return `<div class="global-group bo3-sideboard-group"><div class="stat-title">Parties sidées (manches 2 et 3)</div>
+    ${distributionGroup("",[{label:"W",count:wins,color:"#16a34a"},{label:"L",count:losses,color:"#dc2626"}],"percent")}
+    <div class="global-stat-row"><div><strong>Winrate des parties sidées</strong><small>${total} parties après sideboard · ${wins} W - ${losses} L</small></div><b>${wr}%</b></div>
+  </div>`;
+}
 function openingLandsBlock(parts,bo3=false){
   const values=parts.flatMap(p=>bo3?(Array.isArray(p.openingLands)?p.openingLands:[]):(p.openingLands===0||p.openingLands? [p.openingLands]:[])).filter(v=>v!==null&&v!==undefined&&v!==""&&Number.isInteger(Number(v))&&Number(v)>=0&&Number(v)<=7).map(Number);
   const items=Array.from({length:8},(_,n)=>({label:String(n),count:values.filter(v=>v===n).length,color:["#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#6366f1","#a855f7","#4c1d95"][n]}));
@@ -85,8 +102,9 @@ function opponentStats(parts,all,bo3=false){
  const groups=opponentGroups(parts), total=parts.length;
  const rows=groups.map(([key,ps])=>{
   const name=opponentName(ps[0]), share=all.length?Math.round(all.filter(x=>opponentKey(x)===key).length/all.length*100):0;
+  const isOther=!ps[0].opponentDeckId || name.toLowerCase()==="autre";
   const color=canonicalColors(ps[0].colors||[]);
-  const label=`${esc(name)} <small>${color.join("")} ${colorSymbols(color)}</small>`;
+  const label=isOther?`Autre (<6%)`:`${esc(name)} <small>${colorSymbols(color)}</small>`;
   if(bo3)return bo3MatchRow(label,ps,share);
   const wr=winRateFor(ps);
   return `<div class="global-stat-row"><div><strong>${label}</strong><small>${wr.wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${wr.rate}% <small class="field-share">(${share}%)</small></b></div>`;
@@ -95,13 +113,13 @@ function opponentStats(parts,all,bo3=false){
 }
 function renderOpponentLibrary(){
  $("opponentLibrarySummary").textContent=`${state.opponentDecks.length} deck(s) adverse(s) enregistré(s)`;
- $("opponentDeckList").innerHTML=state.opponentDecks.map(d=>`<div class="opponent-library-item"><div><strong>${esc(d.name)}</strong><small>${esc(d.archetype)} · ${canonicalColors(d.colors).join("")} ${colorSymbols(d.colors)}</small></div><div><button class="text-btn" data-edit-opponent="${esc(d.id)}">Modifier</button><button class="text-btn" data-remove-opponent="${esc(d.id)}">Effacer</button></div></div>`).join("")||'<div class="empty">Aucun deck adverse défini.</div>';
+ $("opponentDeckList").innerHTML=state.opponentDecks.map(d=>`<div class="opponent-library-item"><div><strong>${esc(d.name)}</strong><small>${esc(d.archetype)} · ${colorSymbols(d.colors)}</small></div><div><button class="text-btn" data-edit-opponent="${esc(d.id)}">Modifier</button><button class="text-btn" data-remove-opponent="${esc(d.id)}">Effacer</button></div></div>`).join("")||'<div class="empty">Aucun deck adverse défini.</div>';
  $("opponentDeckList").querySelectorAll("[data-edit-opponent]").forEach(b=>b.onclick=()=>{const d=state.opponentDecks.find(x=>x.id===b.dataset.editOpponent);if(!d)return;editingOpponentId=d.id;$("opponentDeckName").value=d.name;$("libraryOpponentArchetype").value=d.archetype;document.querySelectorAll('input[name="libraryOpponentColor"]').forEach(x=>x.checked=d.colors.includes(x.value));$("cancelOpponentEditBtn").classList.remove("hidden")});
  $("opponentDeckList").querySelectorAll("[data-remove-opponent]").forEach(b=>b.onclick=()=>{const d=state.opponentDecks.find(x=>x.id===b.dataset.removeOpponent);if(!d||!confirm(`Supprimer « ${d.name} » de la bibliothèque ? Les parties enregistrées conserveront leur nom.`))return;state.opponentDecks=state.opponentDecks.filter(x=>x.id!==d.id);save();renderOpponentLibrary()});
 }
 function resetOpponentEditor(){editingOpponentId=null;$("opponentDeckName").value="";document.querySelectorAll('input[name="libraryOpponentColor"]').forEach(x=>x.checked=false);$("libraryOpponentArchetype").value="Aggro";$("cancelOpponentEditBtn").classList.add("hidden")}
 function renderOpponentSelect(value="__other__"){
- const options=state.opponentDecks.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>`<option value="${esc(d.id)}">${esc(d.name)} · ${canonicalColors(d.colors).join("")} · ${esc(d.archetype)}</option>`).join("");
+ const options=state.opponentDecks.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>`<option value="${esc(d.id)}">${esc(d.name)} · ${colorSymbols(d.colors)} · ${esc(d.archetype)}</option>`).join("");
  $("opponentDeckSelect").innerHTML=`${options}<option value="__other__">Autre (hors liste)</option>`;
  $("opponentDeckSelect").value=value;
  if($("opponentDeckSelect").selectedIndex<0)$("opponentDeckSelect").value="__other__";
@@ -128,7 +146,7 @@ function renderGlobalStats(){
     const archetypeRows=Object.entries(arch).sort((a,b)=>b[1].length-a[1].length).map(([a,ps])=>bo3MatchRow(a,ps)).join("");
     $("globalStats").innerHTML=`<div class="global-group"><label class="field-label" for="statsDeckFilter">Deck</label><select id="statsDeckFilter" class="deck-select">${deckOptions}</select></div>
     <div class="global-summary"><div><span>WR global BO3</span><strong>${winRateFor(parts).rate}%</strong><small>${winRateFor(parts).wins} W · ${parts.length-winRateFor(parts).wins} L · ${parts.length} matchs</small></div></div>
-    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    ${openingLandsBlock(parts,true)}\n    ${opponentStats(parts,all,true)}
+    ${bo3ResultsBlock(parts)}\n    ${bo3FirstGameBlock(parts)}\n    ${bo3SideboardBlock(parts)}\n    ${openingLandsBlock(parts,true)}\n    ${opponentStats(parts,all,true)}
     <div class="global-group"><div class="stat-title">WR par archétype adverse</div>${archetypeRows||'<div class="empty">Aucune donnée.</div>'}</div>`;
     $("statsDeckFilter").onchange=e=>{selectedStatsDeck=e.target.value;renderGlobalStats()};
     return;
@@ -153,7 +171,7 @@ function renderGlobalStats(){
   const otherColorParts=otherColorEntries.flatMap(([key,ps])=>ps);
   const allColorGroups={}; all.forEach(p=>{const key=colorCombo(p);(allColorGroups[key]||(allColorGroups[key]=[])).push(p)});
   const colorRows=visibleColors.map(([key,ps])=>{const fieldCount=(allColorGroups[key]||[]).length;const fieldPct=all.length?Math.round(fieldCount/all.length*100):0;return `<div class="global-stat-row"><div><strong>${key} ${colorSymbols(key.split("").filter(c=>["R","U","B","W","G"].includes(c)))}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}% <small class="field-share">(${fieldPct}%)</small></b></div>`}).join("");
-  const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Others</strong><small>Combinaisons ne dépassant pas 6 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}% <small class="field-share">(${all.length?Math.round(otherColorEntries.reduce((n,[key])=>n+(allColorGroups[key]||[]).length,0)/all.length*100):0}%)</small></b></div>`:"";
+  const othersRow=otherColorParts.length?`<div class="global-stat-row"><div><strong>Autre (<6%)</strong><small>Combinaisons ne dépassant pas 6 % · ${otherColorParts.length} partie(s)</small></div><b>${winRateFor(otherColorParts).rate}% <small class="field-share">(${all.length?Math.round(otherColorEntries.reduce((n,[key])=>n+(allColorGroups[key]||[]).length,0)/all.length*100):0}%)</small></b></div>`:"";
   const archetypeGroups={};
   parts.forEach(p=>[...new Set(p.archetypes||[])].forEach(archetype=>{(archetypeGroups[archetype]||(archetypeGroups[archetype]=[])).push(p)}));
   const archetypeRows=Object.entries(archetypeGroups).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([archetype,ps])=>`<div class="global-stat-row"><div><strong>${archetype}</strong><small>${winRateFor(ps).wins} victoire(s) · ${ps.length} partie(s)</small></div><b>${winRateFor(ps).rate}%</b></div>`).join("");
@@ -195,7 +213,7 @@ function selectedValues(name){return [...document.querySelectorAll(`input[name="
 function canonicalColors(colors){const order=["W","U","B","R","G"];return [...new Set(colors||[])].sort((a,b)=>order.indexOf(a)-order.indexOf(b))}
 function colorCombo(p){const c=canonicalColors(p.colors);return c.length?c.join(""):"Non renseigné"}
 function colorSymbols(colors){const symbols={R:"🔥",U:"💧",B:"☠",W:"☀",G:"🌳"};return canonicalColors(colors).map(c=>`<span class="mana-symbol mana-${c}" title="${c}">${symbols[c]}</span>`).join("")||"—"}
-function renderDeckOptions(selected=""){const el=$("deckSelect");el.innerHTML=state.decks.length?state.decks.map((d,i)=>`<option value="${i}" ${String(i)===String(selected)?"selected":""}>${d.name} · ${canonicalColors(d.colors).join("")||"Sans couleur"}</option>`).join(""):`<option value="">Aucun deck — ajoute-en un ci-dessous</option>`;}
+function renderDeckOptions(selected=""){const el=$("deckSelect");el.innerHTML=state.decks.length?state.decks.map((d,i)=>`<option value="${i}" ${String(i)===String(selected)?"selected":""}>${d.name} · ${colorSymbols(d.colors)}</option>`).join(""):`<option value="">Aucun deck — ajoute-en un ci-dessous</option>`;}
 function addDeck(){const name=$("newDeckName").value.trim();if(!name){alert("Donne un nom à ce deck.");return}const colors=canonicalColors([...document.querySelectorAll('input[name="myDeckColor"]:checked')].map(x=>x.value));const existing=state.decks.findIndex(d=>d.name.toLowerCase()===name.toLowerCase());const deck={name,colors};if(existing>=0){state.decks[existing]=deck;renderDeckOptions(existing)}else{state.decks.push(deck);renderDeckOptions(state.decks.length-1)}save();$("newDeckName").value="";document.querySelectorAll('input[name="myDeckColor"]').forEach(x=>x.checked=false)}
 function partMetaText(p){const opponent=`${opponentName(p)} · `;const mode=p.mode==="draw"?"DRAW":"PLAY";const archetypes=(p.archetypes||[]).join(" / ")||"Archétype non renseigné";const colors=`${canonicalColors(p.colors).join("")} ${colorSymbols(p.colors)}`;if(p.result in bo3Labels){const lands=(p.openingLands||[]).map((v,i)=>v===null||v===undefined?null:`M${i+1} : ${v}`).filter(Boolean).join(" · ");return `${mode} · ${opponent}${archetypes} · ${colors} · 1re manche : ${labels[p.firstGameResult]||"—"}${lands?` · ${lands} land(s)`:""}`}const mana={death:"DEATH",ok:"OK",flood:"FLOOD"}[p.mana]||"OK";const t3=p.landT3===false?"3L T3 NON":"3L T3 OUI";return `${mode} · ${opponent}${archetypes} · ${colors} · ${mana} · ${t3}${p.openingLands===null||p.openingLands===undefined?"":` · ${p.openingLands} land(s) en main`}`}
 
@@ -250,7 +268,7 @@ function detail(id){
       const ix=archives.findIndex(x=>x.id===r.id);
       const newer=ix>0?archives[ix-1]:null,older=ix>=0&&ix<archives.length-1?archives[ix+1]:null;
       $("detailContent").innerHTML=`<div class="global-summary"><div><span>WR global BO3</span><strong>${overall.rate}%</strong><small>${overall.wins} W · ${overall.total-overall.wins} L · ${overall.total} matchs</small></div><div class="archive-navigation"><button data-nav="newer" ${newer?"":"disabled"}>← Archive précédente</button><button data-nav="older" ${older?"":"disabled"}>Archive suivante →</button></div></div>
-      ${bo3ResultsBlock(parts)}\n      ${bo3FirstGameBlock(parts)}\n      ${openingLandsBlock(parts,true)}`;
+      ${bo3ResultsBlock(parts)}\n      ${bo3FirstGameBlock(parts)}\n      ${bo3SideboardBlock(parts)}\n      ${openingLandsBlock(parts,true)}`;
       $("detailContent").querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>detail((b.dataset.nav==="newer"?newer:older).id));
       return;
     }

@@ -1,3 +1,15 @@
+# Record V7.2
+
+Évolutions :
+- les descriptions de decks affichent les pictogrammes de couleur sans répéter les lettres ;
+- les entrées « Autre » du WR par deck adverse n'affichent plus de couleurs et précisent le seuil : « Autre (<6%) » ;
+- les bilans de BO sont abrégés en « X BO joués pour Y W - Z L » ;
+- ajout du WR des parties sidées (manches 2 et 3), calculé en déduisant le résultat de la première manche du score final du BO, dans les statistiques BO3 et les archives.
+
+La clé de stockage locale reste `wizards-run-v2` afin de conserver les données existantes.
+
+---
+
 # Record (Wizards Run) V4.5 — mise à jour
 
 Évolutions depuis la V4.2 :
